@@ -1,0 +1,972 @@
+{
+  "about": "新聞與連接頁（本地看板，只限本地）的人手部分。driver 是本週主導因果：一句話，或一組 {line, issues}，必須點名全部進行中議題；lever 是各議題共用的一個變量。issues 是議題，頁面按 since（看法開始日，只用於排序，不顯示）由舊到新編號；每個議題只有三節：facts（事實與連接：每條一個事實加它連到哪裏，附來源標籤）、meaning（含義：機制、打中哪條業務或估值線、價格核對，最後兩條寫「推翻條件：」及「要看：」及日期）、stocks（受影響股票：tickers、channel、expected、effect 短語、why；價格反應由頁面讀看板數據自動填入）。議題之間用 {#議題id} 在文字內互相引用，頁面換成編號，並自動畫出「議題之間的連接」；同一個事實只寫在擁有它的議題，其他議題引用。topics 是對應第一層哪幾組新聞。舊欄位 now、watch、breaks_if、links、confidence、log 仍可讀，但不再顯示（watch、breaks_if 會併入含義）。news 是自動擷取標題的人手含義，以連結為鍵。用戶要求時（晚間更新或每週檢討）才更新。格式、深度標準及寫法見 board_maintenance.md 的「議題解讀指引」。",
+  "updated": "2026-11-15",
+  "rule": "第一層只收官方網站及允許名單上具名新聞機構的標題。第二層每項事實都有我們打開過的來源，標明已核實（一手文件）、報道（具名媒體）、第三方估算或看板數據；未能核實的不上頁，別人轉來的貼文及訊息只用作找題目。含義是推論，只依據頁上的事實；股票影響是業務分析，不是買賣建議。",
+  "lever": {
+    "name": "利率（實質孳息）",
+    "issue": "tga_rates_credit",
+    "text": "傳導：政策利率（{#inflation_ppi_rates}）、融資成本（{#ai_capex_financing}、{#memory_antitrust_hbm}）、估值倍數（{#nvda_export_governance}）；油價（{#iran_hormuz_oil}）暫未傳入。"
+  },
+  "driver": [
+    {
+      "line": "本週共同槓桿是利率：10 年期一週升 31.7 基點至 5.154%，升幅幾乎全是實質孳息，市場加的是政策利率。美國及中國生產者物價處於多年高位，令下調空間縮窄；融資成本抬高 AI 資本開支的代價，壓力集中在 Oracle、CoreWeave 等高槓桿借款人，記憶體長約的買方亦在其中。利率解釋不了的兩件事單獨看：NVIDIA 領導層及 Megaspeed 出口管制風險只落在 NVDA；伊朗週末襲擊巴林及荷姆茲油輪的事件，油價尚未反應，油市基調是供應過剩。",
+      "issues": [
+        "tga_rates_credit",
+        "memory_antitrust_hbm",
+        "nvda_export_governance",
+        "iran_hormuz_oil",
+        "ai_capex_financing",
+        "inflation_ppi_rates"
+      ]
+    }
+  ],
+  "issues": [
+    {
+      "id": "memory_antitrust_hbm",
+      "title": "記憶體反壟斷訴訟與 HBM 產能分配",
+      "status": "進行中",
+      "since": "2026-07-24",
+      "reviewed": "2026-11-15",
+      "topics": [
+        "ai_memory"
+      ],
+      "facts": [
+        {
+          "text": "NVIDIA 的供應承擔一季內由 1,190 億增至 2,790 億美元，主要是記憶體；Micron 2027 年 HBM 絕大部分已簽約並大幅加價、長約多數有價格上下限，SK hynix 亦與 NVIDIA 訂立長期合作：最大買家先鎖定供應，配額已大致分完，所以餘下的更緊更貴。",
+          "src": [
+            {
+              "tag": "已核實（一手文件）",
+              "name": "NVIDIA 10-Q",
+              "date": "2026-07-26",
+              "url": "https://www.sec.gov/Archives/edgar/data/0001045810/000104581026000075/nvda-20260726.htm"
+            },
+            {
+              "tag": "已核實（一手文件）",
+              "name": "Micron prepared remarks",
+              "date": "2026-09-30",
+              "url": "https://s25.q4cdn.com/621799436/files/doc_financials/2026/q4/Q4-FY26-Prepared-Remarks.pdf"
+            },
+            {
+              "tag": "已核實（一手文件）",
+              "name": "NVIDIA 新聞稿",
+              "date": "2026-07-24",
+              "url": "https://nvidianews.nvidia.com/news/sk-group-and-nvidia-expand-strategic-partnership-across-ai-factories-and-next-generation-memory"
+            }
+          ]
+        },
+        {
+          "text": "預計 2027 年 HBM 均價升 121%，第四季一般 DRAM 合約價再升 10–15%；成本已傳到下游：NVIDIA 伺服器加價超過 15%，Apple 毛利率由 50.1% 降至 47.9%，第三季筆電出貨按季跌 15.8%。",
+          "src": [
+            {
+              "tag": "第三方估算",
+              "name": "TrendForce",
+              "date": "2026-09-29",
+              "url": "https://www.trendforce.com/presscenter/news/20260929-13255.html"
+            },
+            {
+              "tag": "第三方估算",
+              "name": "TrendForce",
+              "date": "2026-09-30",
+              "url": "https://www.trendforce.com/presscenter/news/20260930-13258.html"
+            },
+            {
+              "tag": "報道（具名媒體）",
+              "name": "Korea JoongAng Daily（引述 Bloomberg）",
+              "date": "2026-08-23",
+              "url": "https://www.koreajoongangdaily.com/business/nvidia-to-raise-ai-server-prices-by-more-than-15-as-memory-supply-tightens-bloomberg/12838616"
+            },
+            {
+              "tag": "報道（具名媒體）",
+              "name": "CNBC",
+              "date": "2026-11-02",
+              "url": "https://www.cnbc.com/2026/11/02/apple-aapl-q4-2026-earnings-live-updates.html"
+            },
+            {
+              "tag": "第三方估算",
+              "name": "TrendForce",
+              "date": "2026-11-11",
+              "url": "https://www.trendforce.com/presscenter/news/20261111-13303.html"
+            }
+          ]
+        },
+        {
+          "text": "法院 11 月 14 日拒絕駁回訴訟，接納的理由正是上述做法：長約鎖定 HBM、價格大升仍不擴產、延遲新廠、同時審查客戶（這階段只把指控當作屬實）；被告須在 12 月 7 日前答辯，1 月 12 日案件管理會議定證據範圍。",
+          "src": [
+            {
+              "tag": "已核實（一手文件）",
+              "name": "法院命令 ECF 68（N.D. Cal. 5:26-cv-06345）",
+              "date": "2026-11-14",
+              "url": "https://storage.courtlistener.com/recap/gov.uscourts.cand.472931/gov.uscourts.cand.472931.68.0.pdf"
+            }
+          ]
+        },
+        {
+          "text": "命令前市場已把這組分開：記憶體籃子一個月跑輸標普 500 21.3 個百分點，市寬卻擴闊；槓桿基金的納指期貨淨 long 仍在三年第 97 百分位。看板最後數據日是 11 月 13 日，早於命令日，右表未計入命令本身。",
+          "src": [
+            {
+              "tag": "看板數據",
+              "name": "看板 sectors（Yahoo）",
+              "date": "2026-11-13"
+            },
+            {
+              "tag": "看板數據",
+              "name": "CFTC 持倉（機構持倉頁）",
+              "date": "2026-11-03"
+            },
+            {
+              "tag": "看板數據",
+              "name": "看板 stocks（Yahoo）",
+              "date": "2026-11-13"
+            }
+          ]
+        }
+      ],
+      "meaning": [
+        "機制（賣方：收入、利潤率）：長約給賣方價格下限又能加價，2027 年 HBM 已大致分完，所以訴訟短期不改記憶體廠 2027 年的收入及毛利率；受威脅的是這套定價做法能延續多久，即高利潤期的長度，市場按此重新給風險溢價。",
+        "機制（買方：成本）：伺服器及 PC 廠、Apple 的毛利率取決於能否把加價轉給客戶；NVIDIA 先取得供應再轉嫁，AMD、Broadcom 等其他晶片買家要在餘下產能中競爭，長約受限，次序才會改變。買方靠外部融資補足缺口（{#ai_capex_financing}），利率上升抬高這筆成本（{#tga_rates_credit}）；11 月 17 日 NVIDIA 業績的供應承擔是第一個交叉核對（{#nvda_export_governance}）。",
+        "法院與價格核對：法院只把指控當作屬實，未認定有協議；本頁沒有監管行動的資料，三家曾因 DRAM 價格操控被司法部檢控，披露若見協調跡象，介入有先例。一週內 Micron、SK hynix 跑贏，與「風險上升」相反，要待命令後的交易日；AMD、Broadcom 大幅跑贏，亦不能當作「供應偏緊」的證據。",
+        "推翻條件：證據範圍把長約及產能分配排除在外，或被告和解，風險由持續變成一次性；記憶體廠宣布擴充一般 DRAM 則高定價期縮短；監管機構宣布調查則風險擴大。",
+        "要看：11 月 17 日 NVIDIA 業績的供應承擔再升（確認）；11 月 23 至 24 日 HPE、Dell、HP Inc. 毛利率因記憶體成本下降（成本未能轉嫁）；12 月 7 日答辯期限前有否上訴、暫緩或和解（推翻）；2027 年 1 月 12 日證據範圍是否包括長約及產能分配（確認）。"
+      ],
+      "stocks": [
+        {
+          "who": "Samsung、SK hynix、Micron",
+          "tickers": [
+            "MU",
+            "000660.KS"
+          ],
+          "channel": "法律、折現率",
+          "effect": "受壓",
+          "expected": "跑輸",
+          "why": "受審視的正是長約及不擴產；2027 年合約已簽，改變的是高利潤期的長度。Samsung 看板沒有數據。"
+        },
+        {
+          "who": "NVIDIA",
+          "tickers": [
+            "NVDA"
+          ],
+          "channel": "收入、法律",
+          "effect": "供應優先延續",
+          "expected": "無關",
+          "why": "先取得供應並轉嫁成本，短期盈利不變；長約或被要求提交。"
+        },
+        {
+          "who": "AMD、Broadcom、Marvell",
+          "tickers": [
+            "AMD",
+            "AVGO",
+            "MRVL"
+          ],
+          "channel": "成本、收入",
+          "effect": "短期供應偏緊",
+          "expected": "跑輸",
+          "why": "2027 年 HBM 多已被長約客戶取得；長約受限則受惠。"
+        },
+        {
+          "who": "Dell、Super Micro、HPE",
+          "tickers": [
+            "DELL",
+            "SMCI",
+            "HPE"
+          ],
+          "channel": "利潤率、成本",
+          "effect": "成本上升",
+          "expected": "跑輸",
+          "why": "毛利率看能否把加價轉給客戶。"
+        },
+        {
+          "who": "HP Inc.、Apple",
+          "tickers": [
+            "HPQ",
+            "AAPL"
+          ],
+          "channel": "利潤率、收入",
+          "effect": "成本上升、出貨受壓",
+          "expected": "跑輸",
+          "why": "產能轉向 AI；Apple 毛利率已降至 47.9%；一般 DRAM 增加則受惠（Lenovo、Xiaomi 看板沒有數據）。"
+        },
+        {
+          "who": "設備及儲存股：Applied Materials、Lam、Western Digital、Seagate、SanDisk",
+          "tickers": [
+            "AMAT",
+            "LRCX",
+            "WDC",
+            "STX",
+            "SNDK"
+          ],
+          "channel": "收入",
+          "effect": "間接、較遲",
+          "expected": "無關",
+          "why": "擴產要先建廠、後買設備；儲存股非被告，但在看板記憶體籃子內，會扭曲籃子讀數。"
+        }
+      ]
+    },
+    {
+      "id": "ai_capex_financing",
+      "title": "AI 資本開支的融資成本：利率上升把壓力推向高槓桿借款人，大型付款方未縮減開支",
+      "status": "進行中",
+      "since": "2026-11-02",
+      "reviewed": "2026-11-15",
+      "topics": [
+        "ai_capex"
+      ],
+      "facts": [
+        {
+          "text": "Oracle 11 月 2 日定價 100 億美元優先票據（五批，票息 7.000% 至 8.650%，較國債加 240 至 335 基點）及 100 億美元普通股；同樣 2031 年到期，Oracle 一批票息 7.450%，Meta（11 月 3 日）為 5.850%。二手市場同樣定價：Oracle 4.95% 2031 年債 YTW 7.59%（11 月 13 日）、CoreWeave 9.625% 2032 年債 YTW 14.28%（11 月 12 日），10 年期國債 5.154%（{#tga_rates_credit}）。",
+          "src": [
+            {
+              "tag": "已核實（一手文件）",
+              "name": "Oracle 公告",
+              "date": "2026-11-02",
+              "url": "https://investor.oracle.com/investor-news/news-details/2026/Oracle-Announces-Pricing-of-20-Billion-of-Common-Stock-and-Senior-Notes/default.aspx"
+            },
+            {
+              "tag": "已核實（一手文件）",
+              "name": "Oracle 定價條款（SEC FWP）",
+              "date": "2026-11-02",
+              "url": "https://www.sec.gov/Archives/edgar/data/0001341439/000119312526443918/d87441dfwp.htm"
+            },
+            {
+              "tag": "已核實（一手文件）",
+              "name": "Meta 招股章程補充（SEC 424B5）",
+              "date": "2026-11-03",
+              "url": "https://www.sec.gov/Archives/edgar/data/1326801/000119312526448015/d135326d424b5.htm"
+            },
+            {
+              "tag": "看板數據",
+              "name": "BondTerminal 延遲報價（AI 追蹤）",
+              "date": "2026-11-13"
+            }
+          ]
+        },
+        {
+          "text": "CoreWeave 第三季淨利息開支 8.46 億美元（去年同期 3.10 億），營運利潤只有 2.07 億，淨虧損 7.09 億；積壓訂單約 1,325 億美元；2026 年資本開支指引 370 至 390 億美元（下限由 350 億上調），第四季利息開支預計 10.5 至 11.5 億美元。",
+          "src": [
+            {
+              "tag": "已核實（一手文件）",
+              "name": "CoreWeave 第三季業績公告",
+              "date": "2026-11-10",
+              "url": "https://investors.coreweave.com/news/news-details/2026/CoreWeave-Reports-Strong-Third-Quarter-2026-Results/default.aspx"
+            }
+          ]
+        },
+        {
+          "text": "報道稱 CoreWeave 的 CDS 息差本月曾擴闊至 11% 以上（一般視為困境水平）；11 月 11 日股價升 24.71%，公司強調改用資產級債務，行政總裁預計下一批以 7% 至 7.5% 孳息定價，並稱約有 90 億美元客戶預付款及按金。",
+          "src": [
+            {
+              "tag": "報道（具名媒體）",
+              "name": "CNBC（CoreWeave）",
+              "date": "2026-11-11",
+              "url": "https://www.cnbc.com/2026/11/11/coreweave-crwv-outlook-earnings-ai.html"
+            }
+          ]
+        },
+        {
+          "text": "第三季經營現金流對現金資本開支：Amazon 55%、Oracle 81%、Meta 97%、Microsoft 147%；Meta 2026 年資本開支指引為 1,350 至 1,450 億美元（下限由 1,300 億上調）：缺口靠發債、發股或預付款補足，付款方沒有縮減開支。",
+          "src": [
+            {
+              "tag": "看板數據",
+              "name": "AI 追蹤（付款方季度業績）",
+              "date": "2026-09-30"
+            },
+            {
+              "tag": "已核實（一手文件）",
+              "name": "Meta 第三季業績公告",
+              "date": "2026-09-30",
+              "url": "https://investor.atmeta.com/investor-news/press-release-details/2026/Meta-Reports-Third-Quarter-2026-Results/"
+            }
+          ]
+        },
+        {
+          "text": "看板（11 月 13 日）：新雲籃子一個月 −30.9%（相對標普 500 −28.7）、記憶體 −23.6%、光通訊 −23.1%；個股反應見右表。",
+          "src": [
+            {
+              "tag": "看板數據",
+              "name": "看板 sectors、stocks（Yahoo）",
+              "date": "2026-11-13"
+            }
+          ]
+        }
+      ],
+      "meaning": [
+        "機制（融資成本）：無風險利率上升直接抬高票息，信用較弱者多付更多——同樣 2031 年到期，Oracle 7.450% 對 Meta 5.850%，多付 160 個基點（利率來源見 {#tga_rates_credit}）；CoreWeave 的淨利息開支已大於營運利潤，所以高槓桿借款人對孳息最敏感。",
+        "壓力在融資端，不在需求端：新雲及 Oracle 的債息明顯高於大型公司，但積壓訂單龐大、CoreWeave 及 Meta 都上調開支指引下限；CDS 其後在業績及改用資產級債務後緩和，說明融資有替代渠道，只是價格更高。供應商的訂單暫未受影響（{#nvda_export_governance}、{#memory_antitrust_hbm}）。",
+        "價格核對：新雲籃子一個月大幅跑輸，與融資壓力吻合；一週內 CoreWeave 在業績後反彈、Nebius 及 IREN 仍跌，壓力集中在槓桿最高、沒有已簽長約的借款人。NVDA 一個月大跌另有原因（{#nvda_export_governance}），不能全歸因融資。",
+        "推翻條件：付款方維持或上調 2027 年資本開支指引，而 CoreWeave、Oracle 債價回升：融資成本沒有限制擴張，利率 → 資本開支這條通道失效；任何大型付款方下調指引則確認。",
+        "要看：11 月 17 日 NVIDIA 業績的客戶資本開支及供應承擔續升（推翻）；CoreWeave 的資產級債務以約 7% 至 7.5% 孳息定價（行政總裁稱一至兩週內，推翻）；Oracle 第二財季業績後資本開支仍高於經營現金流（確認）；付款方第四季業績後的 2027 年指引（確認或推翻）。三項均未公佈日期。"
+      ],
+      "stocks": [
+        {
+          "who": "CoreWeave、Oracle、Nebius、IREN",
+          "tickers": [
+            "CRWV",
+            "ORCL",
+            "NBIS",
+            "IREN"
+          ],
+          "channel": "融資、折現率",
+          "effect": "受壓",
+          "expected": "跑輸",
+          "why": "債務比重高，利率上升直接抬高利息；CoreWeave 利息開支已大於營運利潤。"
+        },
+        {
+          "who": "Amazon、Meta、Alphabet",
+          "tickers": [
+            "AMZN",
+            "META",
+            "GOOGL"
+          ],
+          "channel": "融資",
+          "effect": "混合",
+          "expected": "跑輸",
+          "why": "資本開支高於或接近經營現金流，要靠外部融資，但信用較強、債息較低。"
+        },
+        {
+          "who": "Microsoft",
+          "tickers": [
+            "MSFT"
+          ],
+          "channel": "融資",
+          "effect": "最不敏感",
+          "expected": "無關",
+          "why": "經營現金流高於資本開支，不依賴外部資金。"
+        },
+        {
+          "who": "NVIDIA、AMD、TSM、Micron、SK hynix",
+          "tickers": [
+            "NVDA",
+            "AMD",
+            "TSM",
+            "MU",
+            "000660.KS"
+          ],
+          "channel": "收入",
+          "effect": "暫未見影響",
+          "expected": "無關",
+          "why": "訂單來自融資受壓的客戶，但付款方未縮減開支；下調指引才會傳到收入。"
+        }
+      ]
+    },
+    {
+      "id": "inflation_ppi_rates",
+      "title": "生產者物價：美國 PPI 按年 6.5%、中國 PPI 按年 5.7%，政策利率下調空間縮窄",
+      "status": "進行中",
+      "since": "2026-11-09",
+      "reviewed": "2026-11-15",
+      "topics": [
+        "china_macro"
+      ],
+      "facts": [
+        {
+          "text": "美國 10 月 PPI 最終需求按月 +0.3%（9 月 +1.4%），按年 +6.5%，為 2022 年 11 月（+7.4%）以來最大的 12 個月升幅；商品按年 +10.2%；剔除食品、能源及貿易服務按年 +4.9%。",
+          "src": [
+            {
+              "tag": "已核實（一手文件）",
+              "name": "BLS：PPI（2026 年 10 月）",
+              "date": "2026-11-13",
+              "url": "https://www.bls.gov/news.release/ppi.nr0.htm"
+            }
+          ]
+        },
+        {
+          "text": "升幅不是能源帶動：最終需求能源按月 −0.1%，柴油 −7.9%；上升的是商品（不含食品及能源 +0.5%）及運輸倉儲服務（+2.0%）。所以 {#iran_hormuz_oil} 的戰事溢價不是美國 PPI 的來源。",
+          "src": [
+            {
+              "tag": "已核實（一手文件）",
+              "name": "BLS：PPI（2026 年 10 月）",
+              "date": "2026-11-13",
+              "url": "https://www.bls.gov/news.release/ppi.nr0.htm"
+            }
+          ]
+        },
+        {
+          "text": "中國 10 月 PPI 按年 +5.7%、按月 +0.7%（CNBC：高於路透調查的 5.3% 預測）；國家統計局稱按月升幅八成以上來自六個能源相關行業，石油和天然氣開採業按年 +35.0%；CPI 按年 +0.7%，核心 +0.8%。能源是共同投入，但只對中國成立。",
+          "src": [
+            {
+              "tag": "已核實（一手文件）",
+              "name": "中國國家統計局：工業生產者價格指數（2026 年 10 月）",
+              "date": "2026-11-10",
+              "url": "https://www.stats.gov.cn/english/PressRelease/202611/t20261111_1965806.html"
+            },
+            {
+              "tag": "已核實（一手文件）",
+              "name": "中國國家統計局：消費物價指數（2026 年 10 月）",
+              "date": "2026-11-10",
+              "url": "https://www.stats.gov.cn/english/PressRelease/202611/t20261111_1965808.html"
+            },
+            {
+              "tag": "已核實（一手文件）",
+              "name": "中國國家統計局：董莉娟解讀 10 月 CPI 和 PPI",
+              "date": "2026-11-09",
+              "url": "https://www.stats.gov.cn/sj/sjjd/202611/t20261109_1965796.html"
+            },
+            {
+              "tag": "報道（具名媒體）",
+              "name": "CNBC（中國 PPI）",
+              "date": "2026-11-09",
+              "url": "https://www.cnbc.com/2026/11/09/china-wholesale-inflation-rises-consumer.html"
+            }
+          ]
+        },
+        {
+          "text": "看板（11 月 13 日，相對標普 500）：必需消費、Costco、Berkshire、Visa、Mastercard 一個月跑贏約 9 至 16 個百分點；Alphabet、Meta 及網絡安全股一個月落後約 5 至 28 個百分點；一週內黃金 −7.2、Microsoft −3.9。這批數據怎樣進入定價見 {#tga_rates_credit}。",
+          "src": [
+            {
+              "tag": "看板數據",
+              "name": "看板 stocks、sectors（Yahoo）",
+              "date": "2026-11-13"
+            }
+          ]
+        }
+      ],
+      "meaning": [
+        "機制：兩國生產者物價同在多年高位，來源不同——中國是能源及原材料，美國 10 月是商品及運輸成本。含義是政策利率下調空間縮窄，而不是通脹預期已被推高；PPI 加 10 月 CPI 按月 +0.4%，令 12 月加息的討論更難降溫。PPI 傳到 CPI 的速度，頁上沒有事實。",
+        "估值與匯率線：實質孳息上升壓縮長存續期股票的估值（Microsoft、Alphabet、Meta、Amazon、網絡安全股）；黃金不產生現金流，持有成本隨實質孳息及美元上升；Visa、Mastercard 收入隨名義消費，通脹偏高對收入偏正面；必需消費、Costco、Berkshire 現金流穩定。",
+        "價格核對：一週內黃金、Microsoft 跑輸吻合；Alphabet、Meta 一週跑贏，一個板塊規則不適用。防守股一個月跑贏是資金輪動，不是通脹的直接結果；網絡安全股一個月落後，本頁找不到宏觀解釋，標示為未解釋，不歸因於通脹。",
+        "推翻條件：10 年期升幅轉為主要來自通脹預期（FRED T10YIE）而非實質孳息，或美國下一次 PPI 回落而政策利率定價隨之下調：這條鏈失效，黃金不再受壓，{#iran_hormuz_oil} 的通道才啟動。",
+        "要看：12 月 9 日 FOMC 加息或維持偏緊取態（確認）；美國下一次 PPI 及商品價格（日期未公佈，回落則推翻）；每次看板刷新時 10 年期升幅的構成。"
+      ],
+      "stocks": [
+        {
+          "who": "Microsoft、Alphabet、Meta、Amazon",
+          "tickers": [
+            "MSFT",
+            "GOOGL",
+            "META",
+            "AMZN"
+          ],
+          "channel": "折現率",
+          "effect": "估值壓力",
+          "expected": "跑輸",
+          "why": "遠期現金流佔比高，實質孳息上升壓縮倍數。"
+        },
+        {
+          "who": "網絡安全股（CrowdStrike、Palo Alto、Fortinet）",
+          "tickers": [
+            "CRWD",
+            "PANW",
+            "FTNT"
+          ],
+          "channel": "折現率",
+          "effect": "估值壓力",
+          "expected": "跑輸",
+          "why": "高增長、遠期現金流佔比高；一個月落後的原因本頁未能解釋。"
+        },
+        {
+          "who": "黃金（GLD、GDX）",
+          "tickers": [
+            "GLD",
+            "GDX"
+          ],
+          "channel": "折現率",
+          "effect": "受壓",
+          "expected": "跑輸",
+          "why": "黃金不產生現金流，持有成本隨實質孳息及美元上升。"
+        },
+        {
+          "who": "Visa、Mastercard、必需消費、Costco、Berkshire",
+          "tickers": [
+            "V",
+            "MA",
+            "XLP",
+            "COST",
+            "BRK-B"
+          ],
+          "channel": "收入",
+          "effect": "不受直接影響",
+          "expected": "無關",
+          "why": "支付網絡收入隨名義消費；其餘一個月跑贏是防守型輪動，不是物價的直接結果。"
+        }
+      ]
+    },
+    {
+      "id": "tga_rates_credit",
+      "title": "政策利率重新定價：孳息、美元及債市波動同升，信用未跟隨，股票按存續期分化",
+      "status": "進行中",
+      "since": "2026-11-10",
+      "reviewed": "2026-11-15",
+      "topics": [
+        "fed_liquidity",
+        "credit"
+      ],
+      "facts": [
+        {
+          "text": "10 月 CPI 按月 +0.4%；Waller 支持 12 月加息，Bowman 及 Jefferson 傾向等待：數據偏熱，委員會分歧（物價端見 {#inflation_ppi_rates}）。",
+          "src": [
+            {
+              "tag": "已核實（一手文件）",
+              "name": "BLS",
+              "date": "2026-11-10",
+              "url": "https://www.bls.gov/news.release/cpi.nr0.htm"
+            },
+            {
+              "tag": "已核實（一手文件）",
+              "name": "Waller",
+              "date": "2026-11-10",
+              "url": "https://www.federalreserve.gov/newsevents/speech/waller20261110a.htm"
+            },
+            {
+              "tag": "已核實（一手文件）",
+              "name": "Bowman",
+              "date": "2026-11-10",
+              "url": "https://www.federalreserve.gov/newsevents/speech/bowman20261110a.htm"
+            },
+            {
+              "tag": "已核實（一手文件）",
+              "name": "Jefferson",
+              "date": "2026-11-13",
+              "url": "https://www.federalreserve.gov/newsevents/speech/jefferson20261113a.htm"
+            }
+          ]
+        },
+        {
+          "text": "同週 2 年期升 37、10 年期升 29 基點（財政部曲線）；看板的 Yahoo 讀數（11 月 5 日起一週）：10 年期升 31.7 基點至 5.154%，5 年期升 37.3 基點。升幅幾乎全是實質孳息：市場加的是政策利率，不是通脹預期；美元指數升 1.1%（103.41），黃金期貨跌 4.6%（3,886），三者同向，是本週利率論點最乾淨的交叉驗證。",
+          "src": [
+            {
+              "tag": "看板數據",
+              "name": "財政部孳息曲線；FRED DFII10、T10YIE",
+              "date": "2026-11-13"
+            },
+            {
+              "tag": "看板數據",
+              "name": "看板 macro（Yahoo ^TNX、^FVX、DX-Y.NYB、GC=F）",
+              "date": "2026-11-13"
+            }
+          ]
+        },
+        {
+          "text": "MOVE 升至一年第 89 百分位（98.79）；七個年期拍賣的間接投標都低於平均；急升前資產管理的 10 年期期貨淨 long 在三年第 99 百分位：長倉重、買家少。",
+          "src": [
+            {
+              "tag": "看板數據",
+              "name": "Yahoo ^MOVE",
+              "date": "2026-11-13"
+            },
+            {
+              "tag": "看板數據",
+              "name": "TreasuryDirect",
+              "date": "2026-11-12"
+            },
+            {
+              "tag": "看板數據",
+              "name": "CFTC 持倉（機構持倉頁）",
+              "date": "2026-11-03"
+            }
+          ]
+        },
+        {
+          "text": "信用及市寬沒有跟隨：高收益債息差一週收窄 28 基點，高於 50 日線的成份股由 63.0% 升至 71.8%，VIX 一週降 24.7%；只有 CCC 落後。準備金兩週上升、逆回購接近零；財政部預計 TGA 在 11 月底升至約 10,250 億美元（現 9,331 億），之後的上升沒有逆回購可以抵銷。",
+          "src": [
+            {
+              "tag": "看板數據",
+              "name": "ICE BofA（FRED）",
+              "date": "2026-11-12"
+            },
+            {
+              "tag": "看板數據",
+              "name": "看板市寬",
+              "date": "2026-11-13"
+            },
+            {
+              "tag": "看板數據",
+              "name": "看板 macro（Yahoo ^VIX）",
+              "date": "2026-11-13"
+            },
+            {
+              "tag": "已核實（一手文件）",
+              "name": "FRED WRESBAL",
+              "date": "2026-11-11",
+              "url": "https://fred.stlouisfed.org/data/WRESBAL.txt"
+            },
+            {
+              "tag": "已核實（一手文件）",
+              "name": "財政部再融資聲明",
+              "date": "2026-11-04",
+              "url": "https://home.treasury.gov/news/press-releases/sb0678"
+            },
+            {
+              "tag": "看板數據",
+              "name": "財政部每日報表",
+              "date": "2026-11-12"
+            }
+          ]
+        },
+        {
+          "text": "一週內房地產、住宅建築、地區銀行、小型股跑輸，一個月卻跑贏（房地產、住宅建築、地區銀行約 6.5 至 8.9 個百分點），Alphabet、Meta 則一個月跑輸 11 至 13 個百分點；個股見右表。AI 融資端的債價見 {#ai_capex_financing}。",
+          "src": [
+            {
+              "tag": "看板數據",
+              "name": "看板 stocks、sectors（Yahoo）",
+              "date": "2026-11-13"
+            }
+          ]
+        }
+      ],
+      "meaning": [
+        "機制（折現率）：升幅幾乎全是實質孳息，對遠期現金流佔比高的股票是估值壓力，不是盈利壓力：一週內房地產、住宅建築、地區銀行、小型股跑輸，方向吻合；黃金與實質孳息及美元同向，亦吻合。融資成本怎樣進入 AI 見 {#ai_capex_financing}。",
+        "傳導失效的地方：一週跑輸的利率敏感組別，一個月卻跑贏，成長股相反，所以不能說利率「已經」主導股價，一週更像短期倉位調整；NVDA 與 AMD、Broadcom 的分化遠大於利率能解釋（{#nvda_export_governance}）；油價亦沒有把戰事溢價傳進利率（{#iran_hormuz_oil}）。信用及市寬沒有跟隨，未有理由全面減風險。",
+        "流動性與機構：12 月 9 日 FOMC 前的通脹數據及會議紀要決定 12 月定價；TGA 月底前上升會抽走準備金，逆回購已沒有緩衝。長存續期倉位重，孳息上升時減存續期或對沖，可能是波動上升的原因之一；拍賣買家要更高孳息才增持。回測顯示曲線形狀只與同月板塊表現有關，之後三個月沒有一致方向，不要延伸。",
+        "推翻條件：高收益債息差轉向擴闊，或 TGA 上升時準備金下降：利率壓力變成流動性及信用壓力，「信用未跟隨」不再成立。",
+        "要看：11 月 16 日延遲的 CFTC 報告（資產管理減持 10 年期則確認）；11 月 17 日 NVIDIA 業績及指引（客戶資本開支續升，則利率壓力暫未傳到 AI 需求，推翻）；11 月 18 日 20 年期拍賣及其後 2、5、7 年期（間接投標仍低於平均則確認）；11 月底 TGA 升至約 10,250 億美元而週四 H.4.1 準備金下降（推翻）；12 月 9 日 FOMC 加息（確認）。"
+      ],
+      "stocks": [
+        {
+          "who": "房地產（XLRE）、住宅建築（XHB）",
+          "tickers": [
+            "XLRE",
+            "XHB"
+          ],
+          "channel": "折現率、融資",
+          "effect": "受壓",
+          "expected": "跑輸",
+          "why": "名義孳息上升抬高按揭及物業融資成本，估值按較高折現率重算。"
+        },
+        {
+          "who": "地區銀行（KRE）、銀行（XLF）",
+          "tickers": [
+            "KRE",
+            "XLF"
+          ],
+          "channel": "利潤率",
+          "effect": "混合",
+          "expected": "跑輸",
+          "why": "曲線變平壓淨息差；信用息差收窄支持資產質素，兩者相反。"
+        },
+        {
+          "who": "小型股（IWM）",
+          "tickers": [
+            "IWM"
+          ],
+          "channel": "融資",
+          "effect": "看信用",
+          "expected": "無關",
+          "why": "小型股先跟信用（回測）；高收益債息差收窄抵銷了部分利率壓力。"
+        },
+        {
+          "who": "Visa、Mastercard",
+          "tickers": [
+            "V",
+            "MA"
+          ],
+          "channel": "折現率、收入",
+          "effect": "估值受壓、收入受通脹支持",
+          "expected": "跑輸",
+          "why": "支付網絡收入隨名義消費增長；折現率上升則壓估值。"
+        },
+        {
+          "who": "Microsoft、Alphabet、Meta、Amazon",
+          "tickers": [
+            "MSFT",
+            "GOOGL",
+            "META",
+            "AMZN"
+          ],
+          "channel": "折現率、融資",
+          "effect": "混合",
+          "expected": "跑輸",
+          "why": "遠期現金流佔比高，但 Microsoft 經營現金流高於資本開支，對融資成本最不敏感。"
+        },
+        {
+          "who": "黃金（GLD）",
+          "tickers": [
+            "GLD"
+          ],
+          "channel": "折現率",
+          "effect": "受壓",
+          "expected": "跑輸",
+          "why": "黃金不產生現金流，持有成本隨實質孳息及美元上升。"
+        },
+        {
+          "who": "公用事業、能源、必需消費、醫療保健、Costco、Berkshire",
+          "tickers": [
+            "XLU",
+            "XLE",
+            "XLP",
+            "XLV",
+            "COST",
+            "BRK-B"
+          ],
+          "effect": "淨影響小",
+          "expected": "無關",
+          "why": "公用事業：孳息升、信用收窄，兩者相反；能源：回測中要通脹預期帶動才利好，這次幾乎不變；其餘一個月跑贏是資金輪動，不是利率的直接結果。"
+        }
+      ]
+    },
+    {
+      "id": "nvda_export_governance",
+      "title": "NVIDIA 領導層驟變及 Megaspeed 出口管制：目前是個股風險，不是板塊風險",
+      "status": "進行中",
+      "since": "2026-11-11",
+      "reviewed": "2026-11-15",
+      "topics": [
+        "export_tariffs"
+      ],
+      "facts": [
+        {
+          "text": "董事會 11 月 11 日接納黃仁勳辭去總裁、行政總裁及董事，即時生效；CFO Colette Kress 兼任臨時行政總裁，Harvey C. Jones 出任董事會主席並物色永久行政總裁；公司仍按原定在 11 月 17 日（星期二）公佈 2027 財年第三季業績。",
+          "src": [
+            {
+              "tag": "已核實（一手文件）",
+              "name": "NVIDIA 8-K（第 5.02 項）",
+              "date": "2026-11-12",
+              "url": "https://www.sec.gov/Archives/edgar/data/1045810/000104581026000082/nvda-20261111.htm"
+            },
+            {
+              "tag": "已核實（一手文件）",
+              "name": "NVIDIA 新聞稿（CEO Transition）",
+              "date": "2026-11-12",
+              "url": "https://nvidianews.nvidia.com/news/nvidia-announces-ceo-transition"
+            },
+            {
+              "tag": "已核實（一手文件）",
+              "name": "NVIDIA 新聞稿（CEO Transition）",
+              "date": "2026-11-12",
+              "url": "https://nvidianews.nvidia.com/news/nvidia-announces-ceo-transition"
+            }
+          ]
+        },
+        {
+          "text": "報道指黃仁勳在與 Megaspeed 一名高層的關係受審視後辭任，該高層據報被美國情報部門判斷為中國間諜；他一直推動放寬對華出口先進 AI 晶片的限制。Bessent：財政部、國防部、國務院及貿易代表辦公室「數月來」都贊成把 Megaspeed 列入實體清單，商務部主導；他認為「系統裏有大量洩漏」，問題是 NVIDIA 是否清楚客戶、有否足夠措施防止晶片轉售給空殼公司。",
+          "src": [
+            {
+              "tag": "報道（具名媒體）",
+              "name": "CNBC（財長 Bessent 訪問）",
+              "date": "2026-11-13",
+              "url": "https://www.cnbc.com/2026/11/13/us-inflation-outlook-federal-reserve-rate-hike.html"
+            },
+            {
+              "tag": "報道（具名媒體）",
+              "name": "CNBC（財長 Bessent 訪問）",
+              "date": "2026-11-13",
+              "url": "https://www.cnbc.com/2026/11/13/us-inflation-outlook-federal-reserve-rate-hike.html"
+            }
+          ]
+        },
+        {
+          "text": "國會安排（均屬被要求或已安排，未見確認出席）：黃仁勳被要求 12 月 1 日出席眾議院委員會閉門簡報；NVIDIA 法律總顧問 12 月 2 日閉門面談；商務部工業及安全局副部長 Kessler 12 月 3 日出席眾議院外交事務委員會聽證；黃仁勳及 Lutnick 被要求下月到參議院銀行委員會作供。",
+          "src": [
+            {
+              "tag": "報道（具名媒體）",
+              "name": "CNBC（財長 Bessent 訪問）",
+              "date": "2026-11-13",
+              "url": "https://www.cnbc.com/2026/11/13/us-inflation-outlook-federal-reserve-rate-hike.html"
+            }
+          ]
+        },
+        {
+          "text": "看板（11 月 13 日）：NVDA 一週 −12.8%（相對標普 500 −15.3 個百分點）、一個月相對 −22.8；同週 AMD +18.9%、Broadcom +18.2%、TSM +6.2%，記憶體籃子 +11.4%。這個分化利率解釋不了（{#tga_rates_credit}）。",
+          "src": [
+            {
+              "tag": "看板數據",
+              "name": "看板 stocks、sectors（Yahoo）",
+              "date": "2026-11-13"
+            }
+          ]
+        }
+      ],
+      "meaning": [
+        "兩個衝擊先後到：領導層及治理已發生並由公司確認；政策（實體清單、牌照、「認識客戶」責任）目前只到官員表態及國會要求作供，未有行政行動。四個部門主張限制，商務部有決定權，程序上的下一步是 12 月 1 至 3 日的國會程序，不是即時的新規則；本頁沒有商務部已採取行動的資料。",
+        "機制：收入線——受威脅的是對華及經轉手公司的需求，及日後牌照收緊的可能；利潤率及成本不受直接影響，頁上沒有對華收入比重的已核實數字，不估算幅度。折現率——領導層離任加合規審視，機構會要求較高風險溢價；孳息上升（{#tga_rates_credit}）同樣壓縮倍數，但只有治理一項是 NVDA 獨有。",
+        "價格核對：NVDA 一週大幅跑輸而 AMD、Broadcom、TSM 跑贏，市場把它當作個別風險，不是出口管制制度或晶片板塊風險，也不是利率；讀數停在 11 月 13 日。未證實：Megaspeed 是否取得 Hopper 或 Blackwell 晶片、NVIDIA 是否知情，沒有已核實文件，Bessent 只說「有大量洩漏」。業績的供應承擔是 {#memory_antitrust_hbm} 的交叉核對，客戶資本開支評論是 {#ai_capex_financing} 的檢驗。",
+        "推翻條件：新規則或調查把 AMD、Broadcom、TSM 同時納入，或證明 NVIDIA 明知客戶是轉手公司：個股事件變成整個出口管制制度的風險。",
+        "要看：11 月 17 日業績及指引維持，並交代對華收入及客戶審查措施（確認）；12 月 1 至 3 日簡報、面談及聽證如期舉行（被要求，未確認）；商務部只把 Megaspeed 等個別買家列入實體清單（確認，日期未公佈）。"
+      ],
+      "stocks": [
+        {
+          "who": "NVIDIA",
+          "tickers": [
+            "NVDA"
+          ],
+          "channel": "收入、折現率、法律",
+          "effect": "受壓（個股治理及合規風險）",
+          "expected": "跑輸",
+          "why": "領導層更替、合規審視及可能的牌照收緊；對華及轉手需求是風險所在。"
+        },
+        {
+          "who": "AMD、Broadcom、TSM",
+          "tickers": [
+            "AMD",
+            "AVGO",
+            "TSM"
+          ],
+          "channel": "收入",
+          "effect": "未被市場連帶",
+          "expected": "無關",
+          "why": "同一出口制度，只有新規則涵蓋所有廠商才會受影響。"
+        },
+        {
+          "who": "Micron、SK hynix",
+          "tickers": [
+            "MU",
+            "000660.KS"
+          ],
+          "channel": "收入",
+          "effect": "間接",
+          "expected": "無關",
+          "why": "NVIDIA 是 HBM 長約的核心買家；11 月 17 日業績前訂單不變。"
+        }
+      ]
+    },
+    {
+      "id": "iran_hormuz_oil",
+      "title": "伊朗襲擊巴林及荷姆茲油輪：週末新事件未有價格可核對，油市基調是供應過剩",
+      "status": "進行中",
+      "since": "2026-11-12",
+      "reviewed": "2026-11-15",
+      "topics": [
+        "oil_iran",
+        "war"
+      ],
+      "facts": [
+        {
+          "text": "11 月 15 日（週日），革命衛隊稱向巴林 Al-Rifaa 直升機基地的美軍防空雷達發射六架無人機，巴林稱全部被攔截；這是兩日內第二次（週五美軍否認有損失，稱擊落兩架）。革命衛隊海軍並稱兩艘油輪在荷姆茲海峽以南觸水雷起火，聲明沒有指明船隻或傷亡；路透指伊朗軍方週四曾稱四艘被擊中，未能核實：各次說法數目不一，均無獨立確認。",
+          "src": [
+            {
+              "tag": "報道（具名媒體）",
+              "name": "The Guardian",
+              "date": "2026-11-15",
+              "url": "https://www.theguardian.com/world/2026/nov/15/iran-launches-drone-attacks-against-us-military-base-in-bahrain"
+            },
+            {
+              "tag": "報道（具名媒體）",
+              "name": "BBC",
+              "date": "2026-11-15",
+              "url": "https://www.bbc.com/news/articles/cqn4e2py48kwo"
+            },
+            {
+              "tag": "報道（具名媒體）",
+              "name": "Anadolu Agency",
+              "date": "2026-11-15",
+              "url": "https://www.aa.com.tr/en/middle-east/2-oil-tankers-hit-mines-catch-fire-near-strait-of-hormuz-irans-revolutionary-guard/4125453"
+            },
+            {
+              "tag": "報道（具名媒體）",
+              "name": "ABC News（直播更新）",
+              "date": "2026-11-15",
+              "url": "https://abcnews.com/International/live-updates/iran-live-updates-americans-tired-forever-wars-araghchi/?id=137967256"
+            },
+            {
+              "tag": "報道（具名媒體）",
+              "name": "路透（經 Euronext 轉載）",
+              "date": "2026-11-13",
+              "url": "https://live.euronext.com/en/financial-news/oil-prices-set-second-straight-weekly-drop-signs-growing-supply-surplus"
+            }
+          ]
+        },
+        {
+          "text": "背景：戰事 2 月由美以聯合襲擊伊朗引發，美伊 6 月簽署諒解備忘錄但談判停滯；美國封鎖伊朗的波斯灣及阿曼灣港口，伊朗聲稱控制荷姆茲海峽；海峽平時約佔全球五分之一的油氣供應，戰事爆發後航運受限。市場已適應九個月戰事。",
+          "src": [
+            {
+              "tag": "報道（具名媒體）",
+              "name": "BBC",
+              "date": "2026-11-15",
+              "url": "https://www.bbc.com/news/articles/cqn4e2py48kwo"
+            },
+            {
+              "tag": "報道（具名媒體）",
+              "name": "ABC News（直播更新）",
+              "date": "2026-11-15",
+              "url": "https://abcnews.com/International/live-updates/iran-live-updates-americans-tired-forever-wars-araghchi/?id=137967256"
+            }
+          ]
+        },
+        {
+          "text": "11 月 13 日布蘭特結算 95.84 美元（按日 +2 美仙，一週約 −2.5%，前一週 −16%），WTI 88.56 美元；看板：布蘭特 11 月 6 日 98.32 美元，WTI 一個月 −9.6%。路透報道國際能源署週五的報告顯示全球石油過剩擴大，市場最大的憂慮已由短缺轉向過剩。",
+          "src": [
+            {
+              "tag": "報道（具名媒體）",
+              "name": "路透（經 Euronext 轉載）",
+              "date": "2026-11-13",
+              "url": "https://live.euronext.com/en/financial-news/oil-prices-set-second-straight-weekly-drop-signs-growing-supply-surplus"
+            },
+            {
+              "tag": "看板數據",
+              "name": "看板 brent、macro（Yahoo BZ=F、CL=F）",
+              "date": "2026-11-13"
+            }
+          ]
+        },
+        {
+          "text": "看板（11 月 13 日，相對標普 500）：一週內能源、國防跑贏、航空跑輸；一個月航空跑贏約 10 至 13 個百分點，國防約 6 至 14，能源持平。看板最後數據日是週五收市，週末事件還沒有價格。",
+          "src": [
+            {
+              "tag": "看板數據",
+              "name": "看板 stocks、sectors（Yahoo）",
+              "date": "2026-11-13"
+            }
+          ]
+        }
+      ],
+      "meaning": [
+        "機制：海峽風險推高航運、保險成本及原油風險溢價——收入線：能源、國防受惠；成本線：航空燃油承擔。要油價實際上升才起作用，再經通脹推高政策利率及美元才傳到大市；但這條鏈目前沒有啟動：油價兩週下跌，10 年期升幅是實質孳息而非通脹預期（{#tga_rates_credit}），美國 PPI 升幅亦不是能源帶動（{#inflation_ppi_rates}）。",
+        "價格核對：一週內能源、國防跑贏、航空跑輸，方向吻合戰事溢價；但一個月航空反而跑贏、能源持平、WTI −9.6%：價格只支持短期、不支持一個月的戰事溢價。週末事件全是伊朗一方的說法加巴林的攔截聲明，只當聲明，不當事實。看板油價頁的人手讀數最後檢討於 10 月 27 日，51 項中 25 項是二手來源，本議題不採用。",
+        "推翻條件：供應過剩持續擴大，而布蘭特在週末新事件之後仍不升：戰事溢價不再進入油價，議題由風險溢價轉為供應過剩。",
+        "要看：下一個交易日（週一開市）布蘭特因週末事件明顯高開並守住（確認），還是像週五一樣不理會（推翻）；獨立證實油輪受損或海峽航運再受限（確認，日期未公佈）；美伊談判重啟或達成安排（推翻，日期未公佈）。"
+      ],
+      "stocks": [
+        {
+          "who": "能源（XLE、Exxon、Chevron）",
+          "tickers": [
+            "XLE",
+            "XOM",
+            "CVX"
+          ],
+          "channel": "收入",
+          "effect": "受惠",
+          "expected": "跑贏",
+          "why": "原油價格及風險溢價直接決定收入。"
+        },
+        {
+          "who": "航空（Delta、United）",
+          "tickers": [
+            "DAL",
+            "UAL"
+          ],
+          "channel": "成本",
+          "effect": "受壓",
+          "expected": "跑輸",
+          "why": "燃油是航空最大的可變成本之一。"
+        },
+        {
+          "who": "航天國防（ITA、Lockheed、Northrop）",
+          "tickers": [
+            "ITA",
+            "LMT",
+            "NOC"
+          ],
+          "channel": "收入",
+          "effect": "受惠",
+          "expected": "跑贏",
+          "why": "衝突持續及重新升溫對國防需求偏正面。"
+        },
+        {
+          "who": "必需消費品股、Tesla",
+          "tickers": [
+            "XLP",
+            "PG",
+            "KO",
+            "TSLA"
+          ],
+          "channel": "成本",
+          "effect": "間接",
+          "expected": "無關",
+          "why": "油價兩週下跌，成本壓力暫未出現；Tesla 本頁沒有直接事實。"
+        }
+      ]
+    }
+  ],
+  "news": {
+    "https://www.federalreserve.gov/newsevents/speech/waller20261110a.htm": {
+      "note": "講話原文（{#tga_rates_credit} 事實 1）。"
+    },
+    "https://www.federalreserve.gov/newsevents/speech/bowman20261110a.htm": {
+      "note": "講話原文（{#tga_rates_credit} 事實 1）。"
+    },
+    "https://www.federalreserve.gov/newsevents/speech/jefferson20261113a.htm": {
+      "note": "講話原文（{#tga_rates_credit} 事實 1）。"
+    },
+    "https://news.google.com/rss/articles/CBMiygFBVV95cUxOelZMcjBaRzdEdTVyeTNjM2dsVWxFV2dWdGJNSXo3czI4QzVscUlyb1c5S0RtOVM5MHdfOUhaejRHU1ZRUFFRZEVJbGx3OW85aVZGeGljWVZXX3pnZVNJSDRjU0djc2IweEVWS1ZSVTlFSV9fdXdlX0NSNWR5NEZtWVNseUtPOWhOS19hUUdxWWJTc1lFcEdfcXFycThtS1Q4WGJibGFYQ2ZleUhPZWx5NnRNME5iVFZ2WmdHWE9uOU0yUGRKVWRVVmN3?oc=5": {
+      "note": "交易所的市場評論：10 年期一週升至 5.15%（{#tga_rates_credit} 事實 2）；標題寫 30 基點，看板按 11 月 6 日計為 29 基點。"
+    }
+  }
+}

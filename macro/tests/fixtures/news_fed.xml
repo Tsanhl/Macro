@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:a10="http://www.w3.org/2005/Atom">
+<channel>
+<title>FRB: Speeches</title>
+<link>https://www.federalreserve.gov/feeds/speeches.htm</link>
+<description>Federal Reserve Board speeches</description>
+<item>
+<link>https://www.federalreserve.gov/newsevents/speech/waller20261110a.htm</link>
+<title>Waller, The Economic Outlook and Some Thoughts on Labor Market Dynamism</title>
+<description>Speech At the Example Conference</description>
+<category>Speech</category>
+<pubDate>Tue, 10 Nov 2026 09:00:00 GMT</pubDate>
+</item>
+<item>
+<link>https://www.federalreserve.gov/newsevents/pressreleases/enforcement20261112a.htm</link>
+<title>Federal Reserve Board announces termination of enforcement action</title>
+<pubDate>Thu, 12 Nov 2026 16:00:00 GMT</pubDate>
+</item>
+</channel>
+</rss>

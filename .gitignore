@@ -1,0 +1,23 @@
+# The board: code, docs, tests and the hand-kept evidence/ (shown on the public site) are tracked.
+# Generated data, run logs and local caches are not; rebuild them with macro/refresh.py and institutional/build.py.
+macro/data/
+macro/site_private/
+macro/.refresh/
+institutional/data/
+ai_cycle_watch/data/
+logs/
+site/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+.venv/
+.env
+.env.*
+
+# Private files never belong here, even if copied in by mistake.
+holdings.json
+watchlist.md
+watch_groups.json
+webhook.txt
+price_alerts/

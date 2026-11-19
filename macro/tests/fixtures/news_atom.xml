@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+<title>Example official notices</title>
+<entry>
+<title>Extension of the Suspension of Expansion of End-User Controls</title>
+<link rel="alternate" href="https://www.federalregister.gov/documents/2026/11/09/2026-22793/example"/>
+<updated>2026-11-09T05:00:00Z</updated>
+<id>tag:example,2026:1</id>
+</entry>
+<entry>
+<title>Agency Information Collection Activities; Submission to OMB</title>
+<link href="https://www.federalregister.gov/documents/2026/11/06/2026-22000/example"/>
+<published>2026-11-06T05:00:00-05:00</published>
+<id>tag:example,2026:2</id>
+</entry>
+</feed>

@@ -1,0 +1,727 @@
+<style>
+#rb-wrap { position: relative; max-width: 80rem; margin-inline: auto; font-family: var(--font-anthropic-sans); }
+.rb-head { display: grid; gap: var(--cds-gap-sm); margin-block-end: var(--cds-gap-lg); }
+.rb-titlerow { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--cds-gap-md); }
+.rb-title { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0; text-wrap: balance; }
+.rb-checks { margin: 12px 0 0; padding: 10px 12px; border: 1px solid var(--cds-border-subtle, rgba(128,128,128,.35)); border-radius: 8px; max-width: 90ch; font-size: var(--cds-font-size-body); line-height: 1.6; }
+.rb-take-line { margin: 0; font-size: var(--cds-font-size-body); line-height: 1.5; }
+.rb-take-line b { font-weight: var(--cds-font-weight-medium); }
+.rb-chips { display: flex; flex-wrap: wrap; gap: 4px var(--cds-gap-md); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
+.rb-chips b { color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
+.rb-seg { display: inline-flex; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); overflow: hidden; }
+.rb-seg button { font: inherit; font-size: var(--cds-font-size-caption); background: transparent; color: var(--color-fg-muted); border: 0; padding: var(--cds-pad-xs) var(--cds-pad-sm); cursor: pointer; }
+.rb-seg button + button { border-inline-start: 1px solid var(--color-border-line); }
+.rb-seg button[aria-pressed="true"] { background: var(--color-panel); color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
+.rb-seg button:focus-visible, .rb-tabs button:focus-visible, .rb-sort:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+.rb-tabs { display: flex; flex-wrap: wrap; gap: var(--cds-gap-xs); border-block-end: 1px solid var(--color-border-line); }
+.rb-tabs button { font: inherit; background: transparent; border: 0; border-block-end: 2px solid transparent; color: var(--color-fg-muted); padding: var(--cds-pad-sm) var(--cds-pad-md); cursor: pointer; margin-block-end: -1px; }
+.rb-tabs button[aria-selected="true"] { color: var(--color-fg); border-block-end-color: var(--color-fg); font-weight: var(--cds-font-weight-medium); }
+.rb-page { display: grid; gap: var(--cds-gap-lg); }
+.rb-h2 { font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); margin: 0; }
+.rb-sub { margin: 0; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); line-height: 1.5; }
+.rb-grid { display: grid; gap: var(--cds-gap-md); grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); }
+.rb-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); display: grid; gap: var(--cds-gap-sm); align-content: start; min-width: 0; }
+.rb-cardhead { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: var(--cds-gap-sm); }
+.rb-chart { position: relative; min-width: 0; }
+.rb-svg { display: block; overflow: visible; }
+.rb-svg text { fill: var(--color-fg-muted); font-size: 11px; font-family: var(--font-anthropic-sans); }
+.rb-svg .rb-gridline { stroke: var(--cds-chart-grid); stroke-width: 1; }
+.rb-svg .rb-axis { stroke: var(--cds-chart-axis); stroke-width: 1; }
+.rb-svg .rb-ref { stroke: var(--cds-chart-reference); stroke-width: 1; stroke-dasharray: 4 3; }
+.rb-legend { display: flex; flex-wrap: wrap; gap: var(--cds-gap-md); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.rb-legend span::before { content: ""; display: inline-block; width: 12px; height: 3px; border-radius: 2px; background: var(--sw); margin-inline-end: 6px; vertical-align: 3px; }
+.rb-legend span.dash::before { background: repeating-linear-gradient(90deg, var(--sw) 0 4px, transparent 4px 7px); }
+.rb-controls { display: flex; flex-wrap: wrap; gap: var(--cds-gap-sm); align-items: center; }
+.rb-tablebox { overflow: auto; max-height: 34rem; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); }
+.rb-table { border-collapse: collapse; width: 100%; font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; }
+.rb-table th, .rb-table td { padding: 6px 10px; text-align: right; white-space: nowrap; border-block-end: 1px solid var(--color-border-line); }
+.rb-table th { position: sticky; top: 0; background: var(--color-panel); color: var(--color-fg-muted); font-weight: var(--cds-font-weight-medium); z-index: 1; }
+.rb-table th:nth-child(-n+3), .rb-table td:nth-child(-n+3) { text-align: left; }
+.rb-table td.rb-tk { font-weight: var(--cds-font-weight-medium); }
+.rb-tip { position: absolute; pointer-events: none; z-index: 10; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; max-width: 16rem; }
+.rb-tip .rb-tiphead { color: var(--cds-text-secondary); margin-block-end: 2px; }
+.rb-tip .rb-tipline { display: flex; gap: 6px; align-items: center; white-space: nowrap; }
+.rb-tip .rb-sw { width: 8px; height: 8px; border-radius: 2px; flex: none; }
+.rb-fail { display: flex; align-items: center; justify-content: center; gap: 6px; min-height: inherit; height: 100%; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+.rb-fail::before { content: ""; width: .375rem; height: .375rem; border-radius: 50%; background: var(--color-bad); }
+[data-dash-source-state=empty] { color: transparent; }
+[data-dash-source-state=refreshing] { opacity: .5; transition: opacity var(--cds-dur-slow); }
+@media (prefers-reduced-motion: no-preference) {
+  .rb-page.rb-in { animation: rb-fade var(--cds-dur-slow) var(--cds-ease-out); }
+  @keyframes rb-fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+}
+.rb-controls { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.rb-refresh { padding:6px 12px; border:1px solid var(--color-border-line); border-radius:6px; background:var(--color-panel); color:var(--color-fg); cursor:pointer; font:inherit; font-size:13px; }
+.rb-refresh:disabled { opacity:.6; cursor:wait; }
+.rb-update-status { font-size:13px; color:var(--color-fg-muted); line-height:1.7; margin:8px 0; }
+.rb-update-status a { color:var(--series-1); }
+</style>
+
+<style>
+.rb-table td.rb-left, .rb-table th.rb-left { text-align: left; }
+.rb-wide { grid-column: 1 / -1; }
+.rb-table tr.rb-sep td { background: var(--color-bg); color: var(--color-fg-muted); font-weight: var(--cds-font-weight-medium); text-align: left; }
+.rb-table tr.rb-muted td { color: var(--color-fg-muted); }
+.rb-rrg.focus .rb-item:not(.on), .rb-rrg.focus .rb-lbl:not(.on) { opacity: 0.18; }
+.rb-rrg .rb-item.on line { stroke-width: 2.5; opacity: 1 !important; }
+.rb-rrg .rb-item.on circle.t, .rb-rrg .rb-item.on .rb-arrow { opacity: 1 !important; }
+.rb-rrg .rb-lbl.on { font-weight: 700; }
+.rb-rrg .rb-wk { display: none; font-size: 10px; fill: var(--color-fg); paint-order: stroke; stroke: var(--color-panel); stroke-width: 3px; }
+.rb-rrg .rb-item.on .rb-wk { display: inline; }
+</style>
+
+<div id="rb-wrap">
+  <header class="rb-head">
+    <div class="rb-titlerow">
+      <h1 class="rb-title" data-en="Sector rotation &amp; market breadth">板塊輪動與市寬</h1>
+      <div class="rb-controls"><div class="rb-seg" role="group" aria-label="語言" data-en-aria="Language">
+        <button type="button" class="rb-lang" data-lang="zh" aria-pressed="true">繁體</button>
+        <button type="button" class="rb-lang" data-lang="en" aria-pressed="false">English</button>
+      </div>
+      <button type="button" class="rb-refresh" id="update-data" hidden>更新數據</button></div>
+    </div>
+    <div id="update-status" class="rb-update-status" role="status" aria-live="polite"></div>
+    <details id="update-dates" class="rb-update-status" hidden><summary>資料更新狀態 / Source dates</summary><div id="update-date-list"></div></details>
+    <nav class="rb-tabs" role="tablist" aria-label="頁面" data-en-aria="Pages">
+      <button type="button" role="tab" id="tab-rotation" data-page="rotation" aria-selected="true" data-en="Rotation">板塊輪動</button>
+      <button type="button" role="tab" id="tab-breadth" data-page="breadth" aria-selected="false" data-en="Breadth">市寬</button>
+      <button type="button" role="tab" id="tab-oil" data-page="oil" aria-selected="false" data-en="Oil">油價</button>
+    </nav>
+  </header>
+
+  <section class="rb-page" id="oil" role="tabpanel" aria-labelledby="tab-oil" hidden>
+    <div class="rb-grid">
+      <div class="rb-card" id="oil-curve-card">
+        <h2 class="rb-h2" data-en="Brent price and curve">Brent 價格及期貨曲線</h2>
+        <p class="rb-sub" data-en="Brent futures by contract (NYMEX Brent financial, settles on ICE Brent), USD per barrel, with the one-week change. If only the front months rise, the market is pricing near-term risk; if the far months rise too, it expects supply to stay short.">按合約列出 Brent 期貨（NYMEX Brent 金融期貨，以 ICE Brent 結算），美元／桶，並列一週變化。只有近月升，代表市場為近期風險定價；遠月也升，才代表預期供應長期減少。</p>
+        <div class="rb-chips" id="oil-spreads"></div>
+        <div class="rb-tablebox" style="max-height: none; border: 0"><table class="rb-table" id="oil-curve"></table></div>
+        <p class="rb-sub" id="oil-roll-note"></p>
+      </div>
+      <div class="rb-card" id="oil-dated-card">
+        <h2 class="rb-h2" data-en="Dated Brent (physical spot) vs futures">Dated Brent（即期實貨價）對期貨</h2>
+        <p class="rb-sub" data-en="Dated Brent is the price of physical North Sea cargoes loading soon (EIA copy on FRED, a few days' lag). Dated above futures means buyers pay up for oil now; a widening gap points to an actual shortage, a narrowing one to futures leading the physical market.">Dated Brent 是即將裝船的北海實貨價格（FRED 轉載 EIA 數據，遲數日）。Dated 高於期貨，即買家願意為現貨多付；差距擴闊表示實貨真的緊，收窄表示期貨走在實貨前面。</p>
+        <p class="rb-take-line" id="oil-dated-reading"></p>
+        <div class="rb-legend" id="lg-oil-dated"></div>
+        <div class="rb-chart dash-skeleton" id="ch-oil-dated" data-source="oil brent" style="min-height: 13rem"></div>
+        <div class="rb-chart dash-skeleton" id="ch-oil-premium" data-source="oil" style="min-height: 9rem"></div>
+      </div>
+      <div class="rb-card" id="oil-eia-card">
+        <h2 class="rb-h2" data-en="US inventories (EIA weekly), including diesel">美國庫存（EIA 每週），包括柴油</h2>
+        <p class="rb-sub" data-en="Million barrels. Compared with the same week's five-year average and a year ago. Draws bigger than expected point to actual tightness.">百萬桶。與過去五年同週平均及一年前比較。跌幅大過預期，代表實際緊。</p>
+        <div class="rb-tablebox" style="max-height: none; border: 0"><table class="rb-table" id="oil-eia"></table></div>
+        <p class="rb-sub" id="oil-eia-note"></p>
+        <div class="rb-legend" id="lg-oil-diesel"></div>
+        <div class="rb-chart dash-skeleton" id="ch-oil-diesel" data-source="oil" style="min-height: 12rem"></div>
+        <div class="rb-tablebox" style="max-height: none; border: 0"><table class="rb-table" id="oil-manual-inv_expect"></table></div>
+        <div class="rb-tablebox" style="max-height: none; border: 0"><table class="rb-table" id="oil-manual-global"></table></div>
+      </div>
+      <div class="rb-card" id="oil-funds-card">
+        <h2 class="rb-h2" data-en="Fund positioning and money flows">基金持倉及資金流</h2>
+        <p class="rb-sub" data-en="Managed-money net long in futures (ICE Brent; CFTC WTI), positions as of each Tuesday, published Friday. Rising length means speculators are chasing; falling length while prices rise means the buyers are elsewhere. ETF flows are recorded readings with their windows.">管理資金在期貨的淨 long（ICE Brent；CFTC WTI），持倉截至每週二、週五公布。淨 long 上升代表投機盤追入；油價升而淨 long 下降，代表推高價格的是別人。ETF 資金流為手動記錄，附計算窗口。</p>
+        <div class="rb-tablebox" style="max-height: none; border: 0"><table class="rb-table" id="oil-cot"></table></div>
+        <div class="rb-legend" id="lg-oil-cot"></div>
+        <div class="rb-chart dash-skeleton" id="ch-oil-cot" data-source="oil" style="min-height: 12rem"></div>
+        <div class="rb-tablebox" style="max-height: none; border: 0"><table class="rb-table" id="oil-manual-flows"></table></div>
+      </div>
+      <div class="rb-card" id="oil-options-card">
+        <h2 class="rb-h2" data-en="Options: OVX and option flows">期權：OVX 及期權成交</h2>
+        <p class="rb-sub" data-en="OVX is the implied volatility of crude options (CBOE, via FRED): how big a move the options market prices. A rising OVX means traders pay more for protection either way.">OVX 是原油期權的隱含波幅（CBOE，經 FRED）：期權市場預期油價會波動多大。OVX 上升，代表無論升跌，買保險都要付更多。</p>
+        <p class="rb-take-line" id="oil-ovx-reading"></p>
+        <div class="rb-chart dash-skeleton" id="ch-oil-ovx" data-source="oil" style="min-height: 11rem"></div>
+        <div class="rb-tablebox" style="max-height: none; border: 0"><table class="rb-table" id="oil-manual-options"></table></div>
+      </div>
+      <div class="rb-card" id="oil-freight-card">
+        <h2 class="rb-h2" data-en="Freight and war-risk insurance">運費及戰爭保險</h2>
+        <p class="rb-sub" data-en="What buyers actually pay to move oil. These costs are real but sit in freight, not in the Brent futures price. Recorded readings with sources.">買家運油實際要付的成本。這些成本是真實的，但屬運費，不在 Brent 期貨價格內。手動記錄，附來源。</p>
+        <div class="rb-tablebox" style="max-height: none; border: 0"><table class="rb-table" id="oil-manual-freight"></table></div>
+      </div>
+      <div class="rb-card" id="oil-physical-card">
+        <h2 class="rb-h2" data-en="Middle East physical prices and official selling prices">中東實貨及官價</h2>
+        <p class="rb-sub" data-en="If oil were scarce, Gulf cargoes would sell at rising premiums. Falling spreads and official prices mean sellers are cutting to move barrels.">如果油真的短缺，海灣原油應該加價也賣得出。價差及官價下跌，代表賣方要減價才賣得出。</p>
+        <div class="rb-tablebox" style="max-height: none; border: 0"><table class="rb-table" id="oil-manual-physical"></table></div>
+      </div>
+      <div class="rb-card" id="oil-exports-card">
+        <h2 class="rb-h2" data-en="Export volumes and Hormuz traffic">出口量及荷姆茲通過量</h2>
+        <p class="rb-sub" data-en="Barrels actually leaving the Gulf. Vessel counts are not barrels: many tankers sail with tracking switched off, and providers define flows differently.">實際離開海灣的油量。船隻數不等於桶數：很多油輪關閉追蹤訊號航行，各數據商的口徑亦不同。</p>
+        <div class="rb-tablebox" style="max-height: none; border: 0"><table class="rb-table" id="oil-manual-exports"></table></div>
+      </div>
+      <div class="rb-card" id="oil-odds-card">
+        <h2 class="rb-h2" data-en="Event odds">事件機率</h2>
+        <p class="rb-sub" data-en="Our stated probabilities (subjective, uncalibrated; log in energy_tracking/judgement_log.md) next to the prediction market.">我們的機率判斷（主觀、未校準；紀錄在 energy_tracking/judgement_log.md）與預測市場並列。</p>
+        <div class="rb-tablebox" style="max-height: none; border: 0"><table class="rb-table" id="oil-manual-odds"></table></div>
+        <p class="rb-sub" id="oil-gaps"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="rb-page" id="rotation" role="tabpanel" aria-labelledby="tab-rotation" hidden>
+    <div class="rb-controls">
+      <div class="rb-seg" role="group" aria-label="範圍" data-en-aria="Universe">
+        <button type="button" class="rb-grp" data-grp="sector" aria-pressed="true" data-en="11 sectors + precious metals">11個板塊＋貴金屬</button>
+        <button type="button" class="rb-grp" data-grp="theme" aria-pressed="false" data-en="Themes">主題</button>
+        <button type="button" class="rb-grp" data-grp="style" aria-pressed="false" data-en="Styles &amp; factors">風格與因子</button>
+        <button type="button" class="rb-grp" data-grp="ai" aria-pressed="false" data-en="AI chain">AI產業鏈</button>
+      </div>
+      <div class="rb-seg" role="group" aria-label="基準" data-en-aria="Benchmark">
+        <button type="button" class="rb-bench" data-bench="spy" aria-pressed="true" data-en="vs S&amp;P 500">對標普500</button>
+        <button type="button" class="rb-bench" data-bench="smh" aria-pressed="false" data-en="vs semis">對半導體</button>
+      </div>
+      <div class="rb-seg" role="group" aria-label="頻率" data-en-aria="Frequency">
+        <button type="button" class="rb-freq" data-freq="w" aria-pressed="true" data-en="Weekly">週線</button>
+        <button type="button" class="rb-freq" data-freq="d" aria-pressed="false" data-en="Daily">日線</button>
+      </div>
+      <span class="rb-sub" data-en="Tail">軌跡</span>
+      <div class="rb-seg" role="group" aria-label="軌跡長度" data-en-aria="Tail length">
+        <button type="button" class="rb-tail" data-tail="2" aria-pressed="false" data-en="1 week">1週</button>
+        <button type="button" class="rb-tail" data-tail="4" aria-pressed="false" data-en="4 weeks">4週</button>
+        <button type="button" class="rb-tail" data-tail="6" aria-pressed="true" data-en="6 weeks">6週</button>
+        <button type="button" class="rb-tail" data-tail="10" aria-pressed="false" data-en="10 weeks">10週</button>
+      </div>
+    </div>
+    <p class="rb-checks" id="data-checks" hidden></p>
+    <div class="rb-card" id="rrg-card">
+      <div>
+        <h2 class="rb-h2" id="rrg-title" data-en="Relative rotation graph">相對輪動圖</h2>
+        <p class="rb-sub" data-en="Across: relative strength (above 100 = outperforming). Up: momentum of that strength (above 100 = accelerating). Sectors usually turn clockwise: improving → leading → weakening → lagging. The dot is the latest week; the line is its path.">橫軸為相對強度（高於100代表跑贏），縱軸為相對強度的動量（高於100代表正在加速）。板塊通常順時針移動：改善 → 領先 → 轉弱 → 落後。圓點為最新一週，線為過去軌跡。</p>
+      </div>
+      <p class="rb-take-line" id="rrg-freq-note" hidden data-en="Daily rotation: RS-ratio against its 20-session average, momentum against 5 sessions earlier. It turns earlier and more often than the weekly graph.">日線輪動：強度比率對 20 日平均，動量對 5 日前。比週線早轉向，亦較多假訊號。</p>
+      <div class="rb-chart dash-skeleton" id="rrg" data-source="sectors rrg_tails rrg_daily" style="min-height: 24rem"></div>
+      <p class="rb-sub" data-en="Each line is the item's path over the chosen weeks: small dots are past weeks, the hollow dot is where the path starts, the large dot is this week, and the arrow shows this week's direction. Hover a dot to bring its path forward and label each point with how many weeks ago it was; click to keep it highlighted, click again to clear. The scale fits every point shown; only a lone far-out point is cut at the frame.">每條線是該項在所選週數內的路線：小點是過去每週的位置，空心點是起點，大圓點是本週，箭頭是本週的移動方向。滑鼠移到圓點上，會突出該項的軌跡，並標出每一點是幾週前；點擊可固定突出，再點一次取消。圖的範圍會自動包含所有點，只有個別極端點才會在邊緣截斷。</p>
+    </div>
+  </section>
+
+  <section class="rb-page" id="breadth" role="tabpanel" aria-labelledby="tab-breadth" hidden>
+    <div class="rb-controls">
+      <div class="rb-seg" role="group" aria-label="時間範圍" data-en-aria="Time range">
+        <button type="button" class="rb-range" data-tab="breadth" data-range="1w" aria-pressed="false" data-en="1 week">1週</button>
+        <button type="button" class="rb-range" data-tab="breadth" data-range="1m" aria-pressed="false" data-en="1 month">1個月</button>
+        <button type="button" class="rb-range" data-tab="breadth" data-range="3m" aria-pressed="true" data-en="3 months">3個月</button>
+        <button type="button" class="rb-range" data-tab="breadth" data-range="6m" aria-pressed="false" data-en="6 months">6個月</button>
+        <button type="button" class="rb-range" data-tab="breadth" data-range="1y" aria-pressed="false" data-en="1 year">1年</button>
+      </div>
+    </div>
+    <div class="rb-grid">
+      <div class="rb-card" id="card-pctabove">
+        <h2 class="rb-h2" data-en="Share of members above the 50-day average">高於 50 天線的標普成分股比例</h2>
+        <p class="rb-sub" data-en="S&amp;P 500 members closing above their own 50-day average: how much of the market the medium-term trend covers. Averages use dividend-adjusted prices, so levels run about 1–2 points above Barchart or Investing.com.">收市價高於自身 50 日平均的標普 500 成分股比例，反映中期趨勢覆蓋多少股份。均線按經調整股息的價格計算，水平一般比 Barchart、Investing.com 高約1至2個百分點。</p>
+        <div class="rb-legend" id="lg-pct"></div>
+        <div class="rb-chart dash-skeleton" id="ch-pct" data-source="breadth" style="min-height: 15rem"></div>
+      </div>
+      <div class="rb-card" id="card-ad">
+        <h2 class="rb-h2" data-en="Advance-decline line">升跌線</h2>
+        <p class="rb-sub" data-en="Left: cumulative net advances. Right: dividend-adjusted SPY, rebased to 100 at the range start. Compare highs and direction; crossings between independently scaled lines have no meaning.">左軸：每日淨上升股數累計。右軸：經股息調整的SPY，所選範圍起點為100。比較高位及方向；兩軸獨立，線條交叉沒有特別意思。</p>
+        <div class="rb-legend" id="lg-ad"></div>
+        <div class="rb-chart dash-skeleton" id="ch-ad" data-source="breadth" style="min-height: 13rem"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="rb-tip" id="rb-tip" hidden></div>
+</div>
+
+<script>
+(() => {
+  // ---------- helpers ----------
+  const root = document.getElementById('rb-wrap');
+  const tip = document.getElementById('rb-tip');
+  const state = { page: 'rotation', grp: 'sector', tail: 6, freq: 'w', shown: new Set(), rrgPin: null, bench: 'spy', range: { breadth: '3m' } };
+  const DAYS = { '1w': 8, '1m': 31, '3m': 92, '6m': 183, '1y': 366 };
+  // rows (with .d Date) inside the tab's chosen range, counted back from the last row
+  const windowed = (rows, tab) => { if (!rows.length) return rows; const cut = +rows.at(-1).d - DAYS[state.range[tab]] * 864e5; return rows.filter((r) => +r.d >= cut); };
+  const en = () => dash.params().lang === 'en';
+  const L = (zh, english) => (en() ? english : zh);
+  const nm = (row, key = 'name') => (en() && row[key + '_en']) || row[key];
+  const fmt1 = d3.format('.1f');
+  const signed = (v, digits = 1) => (v == null ? '—' : (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(digits));
+  const day = (s) => new Date(s + 'T00:00:00Z');
+  const colors = () => dash.colors;
+  const monthFmt = (t) => (en()
+    ? (t.getUTCMonth() === 0 ? d3.utcFormat('%Y')(t) : d3.utcFormat('%b')(t))
+    : (t.getUTCMonth() === 0 ? d3.utcFormat('%Y年')(t) : d3.utcFormat('%-m月')(t)));
+  const TURN = () => ({ confirmed: L('確認', 'confirmed'), early: L('初步', 'early'), unconfirmed: L('未確認', 'unconfirmed') });
+  const QNAME = () => ({ leading: L('領先', 'Leading'), weakening: L('轉弱', 'Weakening'), lagging: L('落後', 'Lagging'), improving: L('改善', 'Improving') });
+
+  const status = (ids) => {
+    const st = ids.map((id) => dash.data(id).status);
+    if (st.some((s) => ['error', 'connect', 'declined', 'missing'].includes(s))) return 'error';
+    return st.every((s) => s === 'ok') ? 'ok' : 'loading';
+  };
+  const fail = (el) => { el.classList.remove('dash-skeleton'); el.replaceChildren(Object.assign(document.createElement('div'), { className: 'rb-fail', textContent: L('未能載入', 'Failed to load') })); };
+  const ready = (el, ids) => {
+    const s = status(ids);
+    if (s === 'error') { fail(el); return false; }
+    if (s !== 'ok') { el.classList.add('dash-skeleton'); el.replaceChildren(); return false; }
+    el.classList.remove('dash-skeleton');
+    return true;
+  };
+
+  const showTip = (event, head, lines) => {
+    tip.replaceChildren();
+    const h = document.createElement('div'); h.className = 'rb-tiphead'; h.textContent = head; tip.append(h);
+    for (const l of lines) {
+      const row = document.createElement('div'); row.className = 'rb-tipline';
+      if (l.color) { const sw = document.createElement('span'); sw.className = 'rb-sw'; sw.style.background = l.color; row.append(sw); }
+      const t = document.createElement('span'); t.textContent = l.text; row.append(t);
+      tip.append(row);
+    }
+    tip.hidden = false;
+    const box = root.getBoundingClientRect();
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    let x = event.clientX - box.left + 12, y = event.clientY - box.top + 12;
+    if (x + tw > box.width) x = event.clientX - box.left - tw - 12;
+    if (x < 0) x = 0;
+    if (y + th > box.height) y = event.clientY - box.top - th - 12;
+    tip.style.left = x + 'px'; tip.style.top = y + 'px';
+  };
+  const hideTip = () => { tip.hidden = true; };
+
+  const measure = (svg, labels) => {
+    const t = svg.append('text');
+    let w = 0;
+    for (const s of labels) { t.text(s); w = Math.max(w, t.node().getComputedTextLength()); }
+    t.remove();
+    return w;
+  };
+
+  // Line chart over dates. series: [{name, color, dash, values: [{d: Date, v}]}]
+  function lineChart(el, { series, height = 220, yFmt = fmt1, ref = null, tipFmt = yFmt, yDomain = null, xDomain = null, endLabels = false, yRightFmt = null }) {
+    el.replaceChildren();
+    const W = Math.max(el.clientWidth, 280), H = height, mt = 8, mb = 22;
+    const all = series.flatMap((s) => s.values).filter((p) => p.v != null);
+    const svg = d3.select(el).append('svg').attr('class', 'rb-svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+    const primary = series.filter((s) => s.axis !== 'right').flatMap((s) => s.values).filter((p) => p.v != null);
+    const secondary = series.filter((s) => s.axis === 'right').flatMap((s) => s.values).filter((p) => p.v != null);
+    const yr = secondary.length ? d3.scaleLinear(d3.extent(secondary, (p) => p.v), [H - mb, mt]).nice(4) : null;
+    const scale = (s) => s.axis === 'right' && yr ? yr : y;
+    const format = (s) => s.tipFmt || tipFmt;
+    const yd = yDomain || d3.extent(ref == null ? primary.map((p) => p.v) : primary.map((p) => p.v).concat([ref]));
+    const y = d3.scaleLinear(yd, [H - mb, mt]).nice(4);
+    const ticks = y.ticks(4);
+    const ml = measure(svg, ticks.map(yFmt)) + 8;
+    const right = yr ? measure(svg, yr.ticks(4).map(yRightFmt || fmt1)) + 12 : endLabels ? (W < 520 ? 92 : 138) : 6, plotRight = W - right;
+    const x = d3.scaleUtc(xDomain || d3.extent(all, (p) => p.d), [ml, plotRight]);
+    svg.append('g').selectAll('line').data(ticks).join('line').attr('class', 'rb-gridline')
+      .attr('x1', ml).attr('x2', plotRight).attr('y1', (t) => y(t)).attr('y2', (t) => y(t));
+    svg.append('g').selectAll('text').data(ticks).join('text').attr('x', ml - 6).attr('y', (t) => y(t)).attr('dy', '0.32em')
+      .attr('text-anchor', 'end').text(yFmt);
+    if (yr) svg.append('g').attr('class', 'rb-right-axis').selectAll('text').data(yr.ticks(4)).join('text').attr('x', plotRight + 6).attr('y', (t) => yr(t)).attr('dy', '0.32em').text(yRightFmt || fmt1);
+    const [d0, d1] = x.domain(), days = (d1 - d0) / 864e5;
+    const every = days > 500 ? (W < 520 ? 6 : 3) : days > 200 ? (W < 520 ? 3 : 2) : 1;
+    const xt = days > 60 ? x.ticks(d3.utcMonth.every(every)) : days > 14 ? x.ticks(d3.utcWeek.every(W < 520 ? 2 : 1)) : x.ticks(d3.utcDay.every(1)).filter((t) => t.getUTCDay() % 6 !== 0);
+    const dayFmt = (t) => (en() ? d3.utcFormat('%b %-d')(t) : d3.utcFormat('%-m/%-d')(t));
+    svg.append('g').selectAll('text').data(xt).join('text').attr('x', (t) => x(t)).attr('y', H - 4).attr('text-anchor', 'middle').text(days > 60 ? monthFmt : dayFmt);
+    if (ref != null) svg.append('line').attr('class', 'rb-ref').attr('x1', ml).attr('x2', plotRight).attr('y1', y(ref)).attr('y2', y(ref));
+    const line = d3.line().defined((p) => p.v != null).x((p) => x(p.d)).y((p) => y(p.v));
+    for (const s of series) {
+      const sy = scale(s);
+      line.y((p) => sy(p.v));
+      svg.append('path').attr('d', line(s.values)).attr('fill', 'none').attr('stroke', s.color)
+        .attr('stroke-width', s.dash ? 1.5 : 2).attr('stroke-dasharray', s.dash ? '4 3' : null)
+        .attr('stroke-linecap', s.dash ? 'butt' : 'round').attr('stroke-linejoin', 'round');
+      const last = s.values.filter((p) => p.v != null).at(-1);
+      if (last && !s.dash) svg.append('circle').attr('cx', x(last.d)).attr('cy', sy(last.v)).attr('r', 3).attr('fill', s.color);
+      if (endLabels && last) {
+        svg.append('line').attr('x1', x(last.d) + 4).attr('x2', plotRight + 9)
+          .attr('y1', sy(last.v)).attr('y2', sy(last.v)).attr('stroke', s.color);
+        const label = svg.append('text').attr('x', plotRight + 13)
+          .attr('y', Math.max(18, Math.min(H - mb - 20, sy(last.v) - 4)))
+          .style('fill', s.color).style('font-size', '12px').style('font-weight', '600');
+        label.append('tspan').text(s.shortName || s.name);
+        label.append('tspan').attr('x', plotRight + 13).attr('dy', '1.3em').text(format(s)(last.v));
+      }
+
+    }
+    const rule = svg.append('line').attr('class', 'rb-axis').attr('y1', mt).attr('y2', H - mb).attr('opacity', 0);
+    const dots = svg.append('g').selectAll('circle').data(series.filter((s) => !s.dash)).join('circle').attr('r', 3.5)
+      .attr('fill', (s) => s.color).attr('opacity', 0);
+    const dates = series[0].values.map((p) => p.d);
+    const bis = d3.bisector((d) => d).center;
+    svg.append('rect').attr('x', ml).attr('y', mt).attr('width', plotRight - ml).attr('height', H - mb - mt).attr('fill', 'transparent')
+      .on('pointermove', (event) => {
+        const [mx] = d3.pointer(event);
+        const i = bis(dates, x.invert(mx));
+        const d = dates[i];
+        rule.attr('x1', x(d)).attr('x2', x(d)).attr('opacity', 1);
+        dots.attr('cx', x(d)).attr('cy', (s) => (s.values[i]?.v == null ? -99 : scale(s)(s.values[i].v))).attr('opacity', (s) => (s.values[i]?.v == null ? 0 : 1));
+        showTip(event, d3.utcFormat('%Y-%m-%d')(d), series.map((s) => ({ color: s.color, text: `${s.name}  ${s.values[i]?.v == null ? '—' : format(s)(s.values[i].v)}` })));
+      })
+      .on('pointerleave', () => { rule.attr('opacity', 0); dots.attr('opacity', 0); hideTip(); });
+  }
+
+  const legend = (el, items) => {
+    el.replaceChildren(...items.map((it) => {
+      const s = document.createElement('span');
+      s.textContent = it.name; s.style.setProperty('--sw', it.color); if (it.dash) s.className = 'dash';
+      return s;
+    }));
+  };
+
+  // ---------- shared ----------
+  const mk =(tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+  // Relative return needed next week to be in leading (RS-ratio and momentum both >= 100): the larger of the two needs
+  const leadNeed = (r, k = '') => (r['need_mom' + k] == null || r['need_ratio' + k] == null ? null : Math.max(r['need_mom' + k], r['need_ratio' + k]));
+
+  // 油價 page (user, 2026-10-23; local board only): automated blocks from data/oil.json (curve, Dated, OVX, EIA, COT)
+  // and manual dated readings from evidence/oil_tracking.json. A missing reading says so; nothing old is shown as new.
+  function drawOil() {
+    let oil = null;
+    try { oil = status(['oil']) === 'ok' ? dash.data('oil').data[0] : null; } catch (e) { oil = null; }
+    const $ = (id) => document.getElementById(id);
+    if (!oil) return;
+    const num = (v, d = 1) => (v == null || !Number.isFinite(v) ? '—' : v.toFixed(d));
+    const mb = (v) => (v == null || !Number.isFinite(v) ? '—' : (v / 1000).toFixed(1));
+    const sg = (v, d = 1) => (v == null || !Number.isFinite(v) ? '—' : signed(v, d));
+    const link = (text, href) => { const a = mk('a', null, text); a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer'; return a; };
+    const table = (el, head, rows) => {
+      el.replaceChildren();
+      const h = mk('tr'); for (const x of head) h.append(mk('th', null, x)); el.append(h);
+      for (const r of rows) {
+        const tr = mk('tr');
+        for (const x of r) { const td = mk('td'); if (x instanceof Node) td.append(x); else td.textContent = x; tr.append(td); }
+        el.append(tr);
+      }
+    };
+    const back = (rows, d, days) => rows.filter((r) => day(r.date) <= new Date(+day(d) - days * 864e5)).at(-1) || null;
+    const c = colors();
+
+    // manual dated readings, grouped by key; the latest and the reading before it
+    const okReading = (r) => /^\d{4}-\d{2}-\d{2}$/.test(r.date || '') && /^https:\/\//.test(r.source || '') && (Number.isFinite(r.value) || r.text);
+    const byKey = new Map();
+    for (const r of (oil.manual?.readings || []).filter(okReading)) { if (!byKey.has(r.key)) byKey.set(r.key, []); byKey.get(r.key).push(r); }
+    for (const list of byKey.values()) list.sort((a, b) => a.date.localeCompare(b.date));
+    const fmtVal = (r) => (r.text ? L(r.text, r.text_en || r.text)
+      : `${Math.abs(r.value) >= 10000 ? d3.format(',')(r.value) : r.value} ${L(r.unit || '', r.unit_en || r.unit || '')}`.trim());
+    const tx = (r, k) => (r[k] ? L(r[k], r[k + '_en'] || r[k]) : '');
+    for (const group of ['flows', 'options', 'physical', 'exports', 'freight', 'inv_expect', 'global', 'odds']) {
+      const el = $('oil-manual-' + group); if (!el) continue;
+      const keys = [...byKey.keys()].filter((k) => byKey.get(k)[0].group === group);
+      if (!keys.length) { el.replaceChildren(); continue; }
+      table(el, [L('項目', 'Item'), L('最新', 'Latest'), L('日期', 'Date'), L('前次', 'Prior'), L('變化', 'Change'), L('備註', 'Note'), L('來源', 'Source')],
+        keys.map((k) => {
+          const list = byKey.get(k), last = list.at(-1), prior = list.length > 1 ? list.at(-2) : null;
+          const chg = prior && Number.isFinite(last.value) && Number.isFinite(prior.value) && last.unit === prior.unit ? last.value - prior.value : null;
+          const notes = [last.window, tx(last, 'note')].filter(Boolean).join('；');
+          return [tx(last, 'item'), fmtVal(last), last.date, prior ? `${fmtVal(prior)}（${prior.date}）` : '—',
+            chg == null ? '—' : signed(chg, Number.isInteger(chg) ? 0 : 2), notes || '—', link(last.provider || L('來源', 'source'), last.source)];
+        }));
+    }
+
+    // curve, spreads and the roll note
+    const curve = oil.curve, rowsC = curve?.rows || [];
+    if (rowsC.length) {
+      table($('oil-curve'), [L('合約', 'Contract'), L('收市（美元／桶）', 'Close ($/bbl)'), L('日期', 'Date'), L('一週變化', '1-week change')],
+        rowsC.map((r) => [r.month, num(r.close, 2), r.date, sg(r.chg_1w, 2)]));
+      const sp = curve.spreads || {}, chips = $('oil-spreads'); chips.replaceChildren();
+      for (const [k, zh, en] of [['m1_m2', '近月對次月', 'M1 − M2'], ['m1_m6', '近月對第6個月', 'M1 − M6'], ['m1_dec_next', '近月對明年12月', 'M1 − next Dec'], ['brent_wti', 'Brent 對 WTI', 'Brent − WTI']]) {
+        const s = mk('span'); s.append(L(zh, en) + ' ', mk('b', null, sp[k] == null ? '—' : '$' + num(sp[k], 2))); chips.append(s);
+      }
+      const f = rowsC[0], [fy, fm] = f.month.split('-').map(Number);
+      const exp = new Date(Date.UTC(fy, fm - 2, 0));  // ICE Brent: last business day of the second month before delivery
+      while ([0, 6].includes(exp.getUTCDay())) exp.setUTCDate(exp.getUTCDate() - 1);
+      const e = exp.toISOString().slice(0, 10);
+      $('oil-roll-note').textContent = L(`近月 ${f.month} 合約約於 ${e} 到期（未計假期）；連續走勢圖轉到下一個月時會機械性下跌約 $${num(sp.m1_m2, 2)}（近月對次月差價），不代表油價真跌。資料截至 ${f.date}。`,
+        `The ${f.month} front contract expires around ${e} (holidays not checked); continuous charts drop about $${num(sp.m1_m2, 2)} at the roll (front minus next), which is not a real fall. Data through ${f.date}.`);
+    }
+
+    // Dated Brent against the front-month close, and the premium
+    const brent = status(['brent']) === 'ok' ? dash.data('brent').data : [];
+    const dated = oil.dated?.rows || [];
+    const prem = dated.filter((r) => r.premium != null);
+    if (dated.length) {
+      const last = dated.at(-1), cut = day(last.date); cut.setMonth(cut.getMonth() - 6);
+      const series = [{ name: L('Dated Brent（實貨）', 'Dated Brent (physical)'), color: c[0], values: dated.filter((r) => day(r.date) >= cut).map((r) => ({ d: day(r.date), v: r.dated })) },
+        { name: L('近月期貨', 'Front-month futures'), color: c[1], values: brent.filter((r) => r.close != null && day(r.date) >= cut).map((r) => ({ d: day(r.date), v: r.close })) }];
+      legend($('lg-oil-dated'), series);
+      $('ch-oil-dated').classList.remove('dash-skeleton'); $('ch-oil-premium').classList.remove('dash-skeleton');
+      lineChart($('ch-oil-dated'), { series, height: 220, yFmt: (v) => '$' + v.toFixed(0), tipFmt: (v) => '$' + v.toFixed(2) });
+      lineChart($('ch-oil-premium'), { series: [{ name: L('Dated 減期貨', 'Dated minus futures'), color: c[2], values: prem.filter((r) => day(r.date) >= cut).map((r) => ({ d: day(r.date), v: r.premium })) }],
+        height: 150, ref: 0, yFmt: (v) => signed(v, 0), tipFmt: (v) => signed(v, 2) + L(' 美元／桶', ' $/bbl') });
+      const p1 = prem.at(-1), pw = p1 ? back(prem, p1.date, 6) : null;
+      $('oil-dated-reading').textContent = p1 ? L(`${p1.date}：Dated $${num(p1.dated, 2)}，期貨 $${num(p1.fut, 2)}，溢價 ${sg(p1.premium, 2)}` + (pw ? `（${pw.date} 為 ${sg(pw.premium, 2)}）` : '') + `。FRED 最新觀察為 ${last.date}，比期貨遲數日。`,
+        `${p1.date}: Dated $${num(p1.dated, 2)}, futures $${num(p1.fut, 2)}, premium ${sg(p1.premium, 2)}` + (pw ? ` (${sg(pw.premium, 2)} on ${pw.date})` : '') + `. Latest FRED observation ${last.date}, a few days behind futures.`) : '';
+    }
+
+    // EIA weekly stocks, diesel against its five-year average
+    const eia = oil.eia || {};
+    const keys = ['crude', 'gasoline', 'distillate', 'cushing', 'spr'].filter((k) => eia[k]);
+    if (keys.length) {
+      table($('oil-eia'), [L('項目', 'Item'), L('最新（百萬桶）', 'Latest (mb)'), L('一週變化', '1-week change'), L('對五年同週平均', 'vs 5-yr same week'), L('對一年前', 'vs year ago'), L('週末日', 'Week ending')],
+        keys.map((k) => { const x = eia[k], l = x.latest; return [L(x.label, x.label_en), mb(l.v), sg(l.chg_1w / 1000, 2), l.vs_avg5_pct == null ? '—' : sg(l.vs_avg5_pct, 1) + '%', sg(l.vs_yago / 1000, 1), l.date]; }));
+      const any = eia[keys[0]];
+      $('oil-eia-note').textContent = L(`EIA 公布日 ${any.release || '—'}，下次 ${any.next_release || '—'}（美東時間 10:30）。五年平均為過去五年同一週（前後4日內）。`,
+        `EIA released ${any.release || '—'}; next ${any.next_release || '—'} (10:30 ET). Five-year average = the same week in the five prior years (within 4 days).`);
+      const ds = eia.distillate;
+      if (ds) {
+        const cut = day(ds.latest.date); cut.setFullYear(cut.getFullYear() - 2);
+        const rows = ds.rows.filter((r) => day(r.date) >= cut);
+        const series = [{ name: L('餾分油（柴油）庫存', 'Distillate (diesel) stocks'), color: c[0], values: rows.map((r) => ({ d: day(r.date), v: r.v / 1000 })) },
+          { name: L('五年同週平均', 'Five-year same-week average'), color: 'var(--cds-chart-muted)', dash: true, values: rows.map((r) => ({ d: day(r.date), v: r.avg5 == null ? null : r.avg5 / 1000 })) }];
+        legend($('lg-oil-diesel'), series);
+        $('ch-oil-diesel').classList.remove('dash-skeleton');
+        lineChart($('ch-oil-diesel'), { series, height: 190, yFmt: (v) => v.toFixed(0), tipFmt: (v) => v.toFixed(1) + L(' 百萬桶', ' mb') });
+      }
+    }
+
+    // managed-money positioning
+    const cot = oil.cot || {}, bR = cot.brent || [], wR = cot.wti || [];
+    const chgN = (rows, n) => (rows.length > n ? rows.at(-1).net - rows.at(-1 - n).net : null);
+    table($('oil-cot'), [L('市場', 'Market'), L('淨 long（張）', 'Net long (lots)'), L('一週變化', '1-week change'), L('四週變化', '4-week change'), L('持倉日', 'As of')],
+      [[L('ICE Brent 管理資金', 'ICE Brent managed money'), bR.length ? d3.format(',')(bR.at(-1).net) : '—', sg(chgN(bR, 1), 0), sg(chgN(bR, 4), 0), bR.at(-1)?.date || '—'],
+       [L('CFTC WTI 管理資金', 'CFTC WTI managed money'), wR.length ? d3.format(',')(wR.at(-1).net) : '—', sg(chgN(wR, 1), 0), sg(chgN(wR, 4), 0), wR.at(-1)?.date || '—']]);
+    if (bR.length || wR.length) {
+      const series = [{ name: L('ICE Brent 淨 long', 'ICE Brent net long'), color: c[0], values: bR.map((r) => ({ d: day(r.date), v: r.net / 1000 })) },
+        { name: L('CFTC WTI 淨 long', 'CFTC WTI net long'), color: c[1], values: wR.map((r) => ({ d: day(r.date), v: r.net / 1000 })) }];
+      legend($('lg-oil-cot'), series);
+      $('ch-oil-cot').classList.remove('dash-skeleton');
+      lineChart($('ch-oil-cot'), { series, height: 190, ref: 0, yFmt: (v) => v.toFixed(0) + L('千', 'k'), tipFmt: (v) => v.toFixed(1) + L('千張', 'k lots') });
+    }
+
+    // OVX
+    const ovx = oil.ovx?.rows || [];
+    if (ovx.length) {
+      const last = ovx.at(-1), wk = back(ovx, last.date, 6), cut = day(last.date); cut.setFullYear(cut.getFullYear() - 1);
+      $('ch-oil-ovx').classList.remove('dash-skeleton');
+      lineChart($('ch-oil-ovx'), { series: [{ name: 'OVX', color: c[0], values: ovx.filter((r) => day(r.date) >= cut).map((r) => ({ d: day(r.date), v: r.v })) }], height: 170, yFmt: (v) => v.toFixed(0), tipFmt: (v) => v.toFixed(2) });
+      $('oil-ovx-reading').textContent = L(`${last.date}：${num(last.v, 2)}` + (wk ? `（${wk.date} 為 ${num(wk.v, 2)}，${sg(last.v - wk.v, 2)}）` : '') + '。',
+        `${last.date}: ${num(last.v, 2)}` + (wk ? ` (${num(wk.v, 2)} on ${wk.date}, ${sg(last.v - wk.v, 2)})` : '') + '.');
+    }
+
+    const gaps = oil.manual?.gaps || [];
+    $('oil-gaps').textContent = gaps.length ? L(`未取得：${gaps.join('；')}。`, `Not yet available: ${gaps.join('; ')}.`) : '';
+  }
+
+  // ---------- rotation ----------
+  // Items for the chosen group: sector/theme/style/AI baskets from `sectors`
+  const sfx = () => (state.bench === 'smh' ? '_smh' : '');
+  const SHORT = { AI_HYPER: ['雲端', 'Hyper'], AI_CHIPS: ['晶片', 'Chips'], AI_MEM: ['記憶體', 'Memory'], AI_NET: ['互連', 'Network'], AI_OPT: ['光通訊', 'Optical'],
+    AI_PWR: ['電力', 'Power'], AI_IPP: ['發電', 'IPP'], AI_NEO: ['新雲', 'Neocloud'], AI_CRYPTO: ['加密', 'Crypto'], AI_NUC: ['核能', 'Nuclear'] };
+  const itemLabel = (r) => (r.group === 'ai' && SHORT[r.ticker] ? L(...SHORT[r.ticker]) : r.ticker);
+  const rotationItems = () => dash.data('sectors').data.filter((r) => r.group === state.grp);
+  const daily = () => state.freq === 'd';
+  const DAY_TAIL = { 2: 5, 4: 10, 6: 15, 10: 20 };
+  const rotationIds = () => (daily() ? ['sectors', 'rrg_daily'] : ['sectors', 'rrg_tails']);
+
+  function drawRRG() {
+    const el = document.getElementById('rrg');
+    if (!ready(el, rotationIds())) return;
+    const Q = QNAME();
+    const k = sfx(), dly = daily();
+    const secs = rotationItems();
+    const tails = d3.group(dash.data(dly ? 'rrg_daily' : 'rrg_tails').data, (r) => r.ticker);
+    const tailN = dly ? DAY_TAIL[state.tail] || 15 : state.tail;
+    const pts = secs.map((s) => ({ s, tail: (tails.get(s.ticker) || []).filter((p) => p['rs_ratio' + k] != null && p['rs_mom' + k] != null)
+      .slice(-tailN).map((p) => ({ rs_ratio: p['rs_ratio' + k], rs_mom: p['rs_mom' + k] })) })).filter((p) => p.tail.length);
+    document.getElementById('rrg-freq-note').hidden = !dly;
+    const TL = { 2: ['1週', '1 week'], 4: ['4週', '4 weeks'], 6: ['6週', '6 weeks'], 10: ['10週', '10 weeks'] };
+    document.querySelectorAll('.rb-tail').forEach((b) => { const n = +b.dataset.tail; b.textContent = dly ? L(`${DAY_TAIL[n]}日`, `${DAY_TAIL[n]} days`) : L(...TL[n]); });
+    el.replaceChildren();
+    if (!pts.length) { el.append(mk('div', 'rb-fail', L('未有可顯示的項目', 'Nothing to show'))); return; }
+    const crowded = pts.length > 8;
+    const W = Math.max(el.clientWidth, 280), H = Math.round(crowded ? Math.min(Math.max(W * 0.78, 380), 640) : Math.min(Math.max(W * 0.62, 320), 520));
+    const svg = d3.select(el).append('svg').attr('class', 'rb-svg rb-rrg' + (state.rrgPin ? ' focus' : '')).attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+    // scale: fit every point shown, each side of 100 on its own (so an empty side doesn't waste space);
+    // only a lone point far beyond the typical spread is left outside; 100 always stays inside
+    const reach = (must, tail, side) => {
+      const d = tail.map((v) => side * (v - 100)).filter((v) => v > 0).sort(d3.ascending);
+      const typical = d3.quantile(d, 0.9) || 0;
+      const allFit = d.filter((v) => v <= typical * 2.5).at(-1) || 0;
+      const m = d3.max(must.map((v) => side * (v - 100)).filter((v) => v > 0)) || 0;
+      return Math.max(1.5, m * 1.12, allFit * 1.06);
+    };
+    // a highlighted (clicked) item's whole path always fits
+    const pinned = pts.find((p) => p.s.ticker === state.rrgPin);
+    const must = (k) => pts.map((p) => p.tail.at(-1)[k]).concat(pinned ? pinned.tail.map((t) => t[k]) : []);
+    const all = (k) => pts.flatMap((p) => p.tail.map((t) => t[k]));
+    const xLo = 100 - reach(must('rs_ratio'), all('rs_ratio'), -1), xHi = 100 + reach(must('rs_ratio'), all('rs_ratio'), 1);
+    const yLo = 100 - reach(must('rs_mom'), all('rs_mom'), -1), yHi = 100 + reach(must('rs_mom'), all('rs_mom'), 1);
+    const ml = 36, mb = 22, mt = 8, mr = 8;
+    const x = d3.scaleLinear([xLo, xHi], [ml, W - mr]);
+    const y = d3.scaleLinear([yLo, yHi], [H - mb, mt]);
+    const quad = [
+      { k: 'leading', x0: 100, x1: xHi, y0: 100, y1: yHi, c: 'var(--color-ok)', ax: 'end', lx: W - mr - 6, ly: mt + 14 },
+      { k: 'weakening', x0: 100, x1: xHi, y0: yLo, y1: 100, c: 'var(--color-warn)', ax: 'end', lx: W - mr - 6, ly: H - mb - 8 },
+      { k: 'lagging', x0: xLo, x1: 100, y0: yLo, y1: 100, c: 'var(--color-bad)', ax: 'start', lx: ml + 6, ly: H - mb - 8 },
+      { k: 'improving', x0: xLo, x1: 100, y0: 100, y1: yHi, c: 'var(--cds-text-secondary)', ax: 'start', lx: ml + 6, ly: mt + 14 },
+    ];
+    svg.append('g').selectAll('rect').data(quad).join('rect').attr('x', (q) => x(q.x0)).attr('width', (q) => x(q.x1) - x(q.x0))
+      .attr('y', (q) => y(q.y1)).attr('height', (q) => y(q.y0) - y(q.y1)).attr('fill', (q) => q.c).attr('fill-opacity', 0.06);
+    svg.append('g').selectAll('text').data(quad).join('text').attr('x', (q) => q.lx).attr('y', (q) => q.ly).attr('text-anchor', (q) => q.ax)
+      .style('fill', (q) => q.c).style('font-size', '12px').style('font-weight', 500).text((q) => Q[q.k]);
+    svg.append('line').attr('class', 'rb-axis').attr('x1', x(100)).attr('x2', x(100)).attr('y1', mt).attr('y2', H - mb);
+    svg.append('line').attr('class', 'rb-axis').attr('x1', ml).attr('x2', W - mr).attr('y1', y(100)).attr('y2', y(100));
+    svg.append('g').selectAll('text').data(x.ticks(W < 520 ? 4 : 6)).join('text').attr('x', (t) => x(t)).attr('y', H - 4).attr('text-anchor', 'middle').text(d3.format('d'));
+    svg.append('g').selectAll('text').data(y.ticks(5)).join('text').attr('x', ml - 6).attr('y', (t) => y(t)).attr('dy', '0.32em').attr('text-anchor', 'end').text(d3.format('d'));
+    const qc = { leading: 'var(--color-ok)', weakening: 'var(--color-warn)', lagging: 'var(--color-bad)', improving: 'var(--cds-text-secondary)' };
+    const clipId = 'rrgclip' + Math.random().toString(36).slice(2, 8);
+    svg.append('clipPath').attr('id', clipId).append('rect').attr('x', ml).attr('y', mt).attr('width', W - mr - ml).attr('height', H - mb - mt);
+    const benchName = state.bench === 'smh' ? L('半導體', 'semis') : L('標普', 'S&P');
+    const labels = [];
+    for (const p of pts) {
+      const qd = p.s[(dly ? 'quadrant_d' : 'quadrant') + k], c = qc[qd] || 'var(--cds-chart-muted)';
+      const id = p.s.ticker, on = state.rrgPin === id;
+      const g = svg.append('g').attr('class', 'rb-item' + (on ? ' on' : '')).attr('data-t', id).attr('clip-path', `url(#${clipId})`);
+      const X = (t) => x(t.rs_ratio), Y = (t) => y(t.rs_mom);
+      for (let i = 1; i < p.tail.length; i++) {
+        g.append('line').attr('x1', X(p.tail[i - 1])).attr('y1', Y(p.tail[i - 1])).attr('x2', X(p.tail[i])).attr('y2', Y(p.tail[i]))
+          .attr('stroke', c).attr('stroke-width', crowded ? 1.25 : 1.5).attr('stroke-linecap', 'round')
+          .attr('opacity', (crowded ? 0.1 : 0.2) + (crowded ? 0.4 : 0.7) * (i / p.tail.length));
+      }
+      g.selectAll('circle.t').data(p.tail.slice(0, -1)).join('circle').attr('class', 't').attr('cx', X).attr('cy', Y).attr('r', 1.8).attr('fill', c).attr('opacity', crowded ? 0.3 : 0.5);
+      if (p.tail.length > 1) g.append('circle').attr('class', 't').attr('cx', X(p.tail[0])).attr('cy', Y(p.tail[0])).attr('r', 3).attr('fill', 'var(--color-panel)').attr('stroke', c).attr('stroke-width', 1.25).attr('opacity', crowded ? 0.45 : 0.7);
+      g.selectAll('text.rb-wk').data(p.tail.slice(0, -1)).join('text').attr('class', 'rb-wk')
+        .attr('x', (t) => X(t) + 5).attr('y', (t) => Y(t) - 5).text((t, i) => (dly ? L(`${p.tail.length - 1 - i}日前`, `${p.tail.length - 1 - i}d ago`) : L(`${p.tail.length - 1 - i}週前`, `${p.tail.length - 1 - i}w ago`)));
+      const last = p.tail.at(-1);
+      if (p.tail.length > 1) {  // arrow halfway along the last step: which way it is moving
+        const a = p.tail.at(-2), x1 = X(a), y1 = Y(a), x2 = X(last), y2 = Y(last), len = Math.hypot(x2 - x1, y2 - y1);
+        if (len > 10) {
+          const ang = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI, mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+          g.append('path').attr('class', 'rb-arrow').attr('d', 'M-4,-3 L3,0 L-4,3 Z').attr('fill', c)
+            .attr('transform', `translate(${mx},${my}) rotate(${ang})`).attr('opacity', crowded ? 0.55 : 0.85);
+        }
+      }
+      g.append('circle').attr('cx', X(last)).attr('cy', Y(last)).attr('r', 5).attr('fill', c).attr('stroke', 'var(--color-panel)').attr('stroke-width', 1.5);
+      labels.push({ x: X(last), y: Y(last), text: itemLabel(p.s), id });
+      const focus = (yes) => { svg.classed('focus', yes || !!state.rrgPin); g.classed('on', yes || state.rrgPin === id); svg.selectAll(`text.rb-lbl[data-t="${id}"]`).classed('on', yes || state.rrgPin === id); };
+      g.append('circle').attr('cx', X(last)).attr('cy', Y(last)).attr('r', 12).attr('fill', 'transparent').style('cursor', 'pointer')
+        .on('pointerenter', () => focus(true))
+        .on('click', () => { state.rrgPin = state.rrgPin === id ? null : id; drawRRG(); })
+        .on('pointermove', (event) => showTip(event, `${p.s.ticker.startsWith('AI_') ? '' : p.s.ticker + ' '}${nm(p.s)}`, dly ? [
+          { color: c, text: `${Q[qd] || '—'}（${L('5日前', '5 days ago')}：${Q[p.s['quadrant_d5' + k]] || '—'}）` },
+          { text: L(`日線強度比率 ${fmt1(last.rs_ratio)} · 動量 ${fmt1(last.rs_mom)}`, `Daily RS-ratio ${fmt1(last.rs_ratio)} · momentum ${fmt1(last.rs_mom)}`) },
+          { text: L(`5日相對${benchName} ${signed(p.s['rel1w' + k])}%`, `5 days vs ${benchName} ${signed(p.s['rel1w' + k])}%`) },
+          { text: L(`週線：${Q[p.s['quadrant' + k]] || '—'}`, `Weekly: ${Q[p.s['quadrant' + k]] || '—'}`) },
+        ] : [
+          { color: c, text: `${Q[qd] || '—'}（${L('4週前', '4 weeks ago')}：${Q[p.s['quadrant_4w' + k]] || '—'}）` },
+          { text: L(`強度比率 ${fmt1(last.rs_ratio)} · 動量 ${fmt1(last.rs_mom)}`, `RS-ratio ${fmt1(last.rs_ratio)} · momentum ${fmt1(last.rs_mom)}`) },
+          { text: L(`1個月相對${benchName} ${signed(p.s['rel1m' + k])}%`, `1 month vs ${benchName} ${signed(p.s['rel1m' + k])}%`) },
+          ...(qd === 'leading' && p.s['lead_weeks' + k] ? [{ text: (() => {
+            const n = p.s['lead_weeks' + k], odds = n >= 8 ? 13 : n >= 6 ? 16 : n >= 4 ? 25 : n >= 2 ? 41 : null;
+            return odds ? L(`已領先 ${n} 週；歷史上再領先4週的機會約 ${odds}%（參考）`, `Leading ${n} wks; historically ~${odds}% lead 4 more (reference)`) : L(`已領先 ${n} 週`, `Leading ${n} wks`);
+          })() }] : []),
+          ...(qd === 'improving' && p.s['turn' + k] ? [{ text: L(`轉強：${TURN()[p.s['turn' + k]]}（強度比率 ${signed(p.s['ratio_chg' + k], 2)}；上週 ${signed(p.s['rel_w2' + k])}%、本週 ${signed(p.s['rel_w1' + k])}%）`, `Turn: ${TURN()[p.s['turn' + k]]} (RS-ratio ${signed(p.s['ratio_chg' + k], 2)}; last week ${signed(p.s['rel_w2' + k])}%, this week ${signed(p.s['rel_w1' + k])}%)`) }] : []),
+          ...(p.s['need_mom' + k] != null ? [
+            { text: L(`下週若與${benchName}同步：${Q[p.s['next_flat' + k]] || '—'}`, `Next week if it matches ${benchName}: ${Q[p.s['next_flat' + k]] || '—'}`) },
+            { text: L(`下週動量轉正（≥100）需相對${benchName} ${signed(p.s['need_mom' + k])}%`, `Momentum back to 100 next week needs ${signed(p.s['need_mom' + k])}% vs ${benchName}`) },
+            ...(leadNeed(p.s, k) != null ? [{ text: L(`下週${qd === 'leading' ? '留在' : '升入'}領先需相對${benchName} ${signed(leadNeed(p.s, k))}%`, `${qd === 'leading' ? 'Staying in' : 'Reaching'} leading next week needs ${signed(leadNeed(p.s, k))}% vs ${benchName}`) }] : []),
+          ] : []),
+          ...(p.s.members_list ? [{ text: L(`成分股：${p.s.members_list}`, `Members: ${p.s.members_list}`) }] : []),
+        ]))
+        .on('pointerleave', () => { hideTip(); focus(false); });
+    }
+    // labels: to the right of the dot (left near the edge), pushed apart where they would overlap
+    const lg = svg.append('g').style('pointer-events', 'none');
+    for (const l of labels) {
+      const t = lg.append('text').attr('class', 'rb-lbl' + (state.rrgPin === l.id ? ' on' : '')).attr('data-t', l.id).style('fill', 'var(--color-fg)').style('font-size', '11px').style('font-weight', 500).attr('dy', '0.32em').text(l.text);
+      l.w = t.node().getComputedTextLength(); l.node = t;
+      l.left = l.x + 8 + l.w > W - mr;
+      l.x0 = l.left ? l.x - 8 - l.w : l.x + 8; l.ly = l.y;
+    }
+    labels.sort((a, b) => a.ly - b.ly);
+    for (let i = 0; i < labels.length; i++) {
+      for (let j = 0; j < i; j++) {
+        const a = labels[j], b = labels[i];
+        if (b.x0 < a.x0 + a.w + 4 && a.x0 < b.x0 + b.w + 4 && b.ly - a.ly < 12) b.ly = a.ly + 12;
+      }
+    }
+    for (const l of labels) {
+      l.node.attr('x', l.x0).attr('y', Math.min(l.ly, H - mb - 4));
+      if (Math.abs(l.ly - l.y) > 3) lg.append('line').attr('x1', l.left ? l.x - 5 : l.x + 5).attr('y1', l.y).attr('x2', l.left ? l.x0 + l.w : l.x0).attr('y2', l.ly).attr('stroke', 'var(--cds-chart-axis)').attr('stroke-width', 0.75);
+    }
+  }
+
+  // suspected unadjusted share splits (build_data.split_check): history before the break is left out, so their returns
+  // show blank until Yahoo adjusts the series; say so above the table
+  function drawDataChecks() {
+    const box = document.getElementById('data-checks');
+    if (!box) return;
+    const rows = status(['data_checks']) === 'ok' ? dash.data('data_checks').data : [];
+    box.hidden = !rows.length;
+    box.textContent = rows.length ? L('數據待確認：', 'Data to confirm: ') + rows.map((x) => L(
+      `${x.ticker}（${x.name}）${x.date} 由 ${x.before} 變 ${x.after}（約 ${x.ratio} 倍，成交量約平常 ${x.volume_x} 倍），疑似分拆而報價未調整；分拆前的歷史暫不計算`,
+      `${x.ticker} ${x.date}: ${x.before} to ${x.after} (about ${x.ratio}x, volume ${x.volume_x}x normal), a suspected unadjusted split; history before it is left out`)).join(L('；', '; ')) : '';
+  }
+
+  // ---------- breadth ----------
+  function drawBreadth() {
+    const els = ['ch-pct', 'ch-ad'].map((id) => document.getElementById(id));
+    const ok = els.map((el) => ready(el, ['breadth'])).every(Boolean);
+    if (ok) {
+      const b = windowed(dash.data('breadth').data.map((r) => ({ ...r, d: day(r.date) })), 'breadth');
+      const c = colors();
+      const spy0 = b[0].spy_index;
+      const pctSeries = [
+        { name: L('50天線', '50-day'), color: c[0], values: b.map((r) => ({ d: r.d, v: r.pct50 })) },
+      ];
+      legend(document.getElementById('lg-pct'), pctSeries);
+      lineChart(els[0], { series: pctSeries, height: 240, yDomain: [0, 100], ref: 50, yFmt: (v) => v + '%', tipFmt: (v) => fmt1(v) + '%' });
+      const adSeries = [
+        { name: L('升跌線（左軸）', 'A-D line (left)'), color: c[0], values: b.map((r) => ({ d: r.d, v: r.ad_line })) },
+        { name: L('SPY（右軸，起點100）', 'SPY (right, starts at 100)'), axis: 'right', color: c[1], tipFmt: fmt1,
+          values: b.map((r) => ({ d: r.d, v: r.spy_index != null && spy0 > 0 ? r.spy_index / spy0 * 100 : null })) },
+      ];
+      legend(document.getElementById('lg-ad'), adSeries);
+      lineChart(els[1], { series: adSeries, height: 240, yFmt: d3.format(','), tipFmt: d3.format(','), yRightFmt: fmt1 });
+    }
+  }
+
+  // ---------- language: static text carries its English in data-en ----------
+
+  function applyLang() {
+    for (const el of root.querySelectorAll('[data-en]')) {
+      if (el.dataset.zh == null) el.dataset.zh = el.textContent;
+      const want = en() ? el.dataset.en : el.dataset.zh;
+      if (el.textContent !== want) el.textContent = want;
+    }
+    for (const el of root.querySelectorAll('[data-en-aria]')) {
+      if (el.dataset.zhAria == null) el.dataset.zhAria = el.getAttribute('aria-label');
+      el.setAttribute('aria-label', en() ? el.dataset.enAria : el.dataset.zhAria);
+    }
+    root.lang = en() ? 'en' : 'zh-Hant-HK';
+  }
+
+  // ---------- controls ----------
+  const press = (sel, attr, val) => document.querySelectorAll(sel).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset[attr] === String(val))));
+  document.querySelectorAll('.rb-lang').forEach((b) => b.addEventListener('click', () => dash.setParams({ lang: b.dataset.lang })));
+  document.querySelectorAll('.rb-grp').forEach((b) => b.addEventListener('click', () => { state.grp = b.dataset.grp; drawAll(); }));
+  document.querySelectorAll('.rb-tail').forEach((b) => b.addEventListener('click', () => { state.tail = +b.dataset.tail; drawAll(); }));
+  document.querySelectorAll('.rb-freq').forEach((b) => b.addEventListener('click', () => { state.freq = b.dataset.freq; drawAll(); }));
+  document.querySelectorAll('.rb-bench').forEach((b) => b.addEventListener('click', () => { state.bench = b.dataset.bench; drawAll(); }));
+  document.querySelectorAll('.rb-range').forEach((b) => b.addEventListener('click', () => { state.range[b.dataset.tab] = b.dataset.range; drawAll(); }));
+  const PAGES = ['rotation', 'breadth', 'oil'];
+  const showPage = (page, link = true) => {
+    state.page = page;
+    document.querySelectorAll('.rb-tabs button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.page === page)));
+    document.querySelectorAll('.rb-page').forEach((p) => {
+      const on = p.id === page;
+      p.hidden = !on;
+      if (on && !state.shown.has(page)) { state.shown.add(page); p.classList.add('rb-in'); }
+    });
+    if (link) dash.setLink(page);
+    drawAll();
+  };
+  document.querySelectorAll('.rb-tabs button').forEach((b) => b.addEventListener('click', () => showPage(b.dataset.page)));
+
+  function drawAll() {
+    hideTip();
+    applyLang();
+    press('.rb-lang', 'lang', en() ? 'en' : 'zh');
+    press('.rb-grp', 'grp', state.grp);
+    press('.rb-tail', 'tail', state.tail);
+    press('.rb-freq', 'freq', state.freq);
+    press('.rb-bench', 'bench', state.bench);
+    document.querySelectorAll('.rb-range').forEach((b) => b.setAttribute('aria-pressed', String(state.range[b.dataset.tab] === b.dataset.range)));
+    if (state.page === 'oil') drawOil();
+    if (state.page === 'rotation') {
+      document.getElementById('rrg-title').textContent = (state.bench === 'smh' ? L('相對輪動圖（對半導體', 'Relative rotation graph (vs semis') : L('相對輪動圖（對標普500', 'Relative rotation graph (vs S&P 500'))
+        + (daily() ? L('，日線）', ', daily)') : L('，週線）', ', weekly)'));
+      drawRRG(); drawDataChecks();
+    }
+    if (state.page === 'breadth') drawBreadth();
+  }
+
+  const start = location.hash.slice(1);
+  showPage(PAGES.includes(start) ? start : 'rotation', false);
+  dash.onData(drawAll);
+})();
+</script>

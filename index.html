@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<script>(function(){var f=window.fetch;window.fetch=function(u,o){var s=typeof u==='string'?u:(u&&u.url)||'';
+if(/(^|\/)api\//.test(s))return Promise.reject(new Error('static snapshot'));return f.apply(this,arguments);};})();</script>
+<style>#all,#upd,#update-data{display:none!important}.static-note{font-size:13px;color:var(--ink-2,#52514e)}</style>
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>市場 Board</title>
+<style>
+:root { color-scheme: light; --surface: #fcfcfb; --surface-2: #f4f3f0; --line: #e2e1dc; --ink: #0b0b0b; --ink-2: #52514e; }
+@media (prefers-color-scheme: dark) { :root { color-scheme: dark; --surface: #1a1a19; --surface-2: #232321; --line: #383835; --ink: #f0efec; --ink-2: #c3c2b7; } }
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { display: flex; flex-direction: column; background: var(--surface); color: var(--ink);
+  font: 14px/1.5 -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Helvetica Neue", sans-serif; }
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--surface-2); }
+button { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 5px 16px; cursor: pointer; }
+button[aria-pressed="true"] { border-color: var(--ink-2); font-weight: 600; }
+button:focus-visible { outline: 2px solid #2a78d6; outline-offset: 1px; }
+button:disabled { opacity: .6; cursor: default; }
+.spacer { flex: 1; } #msg { color: var(--ink-2); font-size: 13px; }
+main { position: relative; flex: 1; min-height: 0; }
+iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: var(--surface); }
+iframe.off { visibility: hidden; pointer-events: none; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <button type="button" data-view="inst" aria-pressed="true">機構持倉</button>
+  <button type="button" data-view="macro" aria-pressed="false">宏觀</button>
+  <button type="button" data-view="news" aria-pressed="false">新聞與連接</button>
+  <button type="button" data-view="ai" aria-pressed="false">AI 追蹤</button>
+  <span class="spacer"></span>
+  <span id="msg" role="status" class="static-note">靜態版本：2026-11-21 10:36（英國時間）匯出，數據截至 2026-11-20 收市；更新按鈕、盤中報價及自動新聞擷取只在本地看板運作。</span>
+  <button type="button" id="all">更新全部數據</button>
+</div>
+<main>
+  <iframe id="inst" title="機構持倉" src="inst/"></iframe>
+  <iframe id="macro" class="off" title="宏觀" src="macro/"></iframe>
+  <iframe id="news" class="off" title="新聞與連接" src="news/"></iframe>
+  <iframe id="ai" class="off" title="AI 追蹤" src="ai/"></iframe>
+</main>
+<script>
+const VIEWS = ['inst', 'macro', 'news', 'ai'], BOARDS = ['inst', 'macro'], $ = s => document.querySelector(s), stale = new Set();
+function show(v) {
+  VIEWS.forEach(x => {
+    document.getElementById(x).classList.toggle('off', x !== v);
+    document.querySelector(`[data-view=${x}]`).setAttribute('aria-pressed', x === v);
+  });
+  try { history.replaceState(null, '', '#' + v); } catch (e) {}
+  if (stale.delete(v)) document.getElementById(v).contentWindow.location.reload();
+}
+document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => show(b.dataset.view));
+const fromHash = () => show(VIEWS.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'inst');
+fromHash();
+window.addEventListener('hashchange', fromHash);
+
+// One button: each board keeps its own lock and its own "keep the previous version on failure" behaviour.
+const state = v => fetch(`${v}/api/update`, { cache: 'no-store' }).then(r => r.json());
+const LABEL = { inst: '機構持倉', macro: '宏觀' };
+async function updateAll() {
+  $('#all').disabled = true;
+  const results = await Promise.all(BOARDS.map(async v => {
+    try {
+      const { token } = await state(v);
+      await fetch(`${v}/api/update`, { method: 'POST', headers: { 'X-Refresh-Token': token || '' } });
+      for (;;) {
+        await new Promise(r => setTimeout(r, 4000));
+        const s = await state(v);
+        if (s.state !== 'running' && s.state !== 'external_running') {
+          if (s.state === 'failed') return `${LABEL[v]}未完成`;
+          stale.add(v);
+          if (v === 'macro') { stale.add('news'); stale.add('ai'); }  // both pages are built from the macro board's data
+          return `${LABEL[v]}已更新`;
+        }
+        $('#msg').textContent = '更新中，約需數分鐘…';
+      }
+    } catch (e) { return `${LABEL[v]}未能更新`; }
+  }));
+  $('#msg').textContent = results.join('；');
+  $('#all').disabled = false;
+  const now = VIEWS.find(v => !document.getElementById(v).classList.contains('off'));
+  if (stale.delete(now)) document.getElementById(now).contentWindow.location.reload();
+}
+$('#all').onclick = updateAll;
+</script>
+</body>
+</html>

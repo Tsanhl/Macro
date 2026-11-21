@@ -1,6 +1,6 @@
 # One board
 
-本地只用一個網址：http://localhost:8770。頁頂有四個頁面，次序是：機構持倉、宏觀、新聞與連接、AI 追蹤。
+本地只用一個網址：http://localhost:8770。頁頂有四個頁面，次序是：機構持倉、宏觀、新聞與連接、AI 追蹤。若本機另有私人檔 `../valuation and research/board_view.json`，頁尾加一個「估值」頁（`/val/`），只在本地顯示；`export_site.py` 不匯出這一頁。
 
 ```bash
 python3 server/serve.py
@@ -14,6 +14,7 @@ python3 server/serve.py
 | `/macro/` | 宏觀，分「宏觀」和「油價」兩個子頁，送出頁面時才重組 | `macro/`，8766，由 `macro_view.py` 重組，文字由 `macro_summary.py` 生成 |
 | `/news/` | 新聞與連接：第一層自動擷取的新聞，第二層人手撰寫的議題 | `pages.py`，讀 `macro/site_private/data/news_connect.json`（由 `macro/data/news_feed.json` 的標題及 `evidence/news_connect.json` 的議題及含義合成）；標題每次載入頁面時直接讀 `macro/data/news_feed.json`，含義及議題按連結沿用上次建置 |
 | `/ai/` | AI 追蹤 | `pages.py`，讀 `macro/site_private/data/ai_tracker.json`（來自 `evidence/ai_tracker.json`） |
+| `/val/` | 估值（只限本地） | `pages.val_page`，讀本 repo 以外的私人檔 `../valuation and research/board_view.json`；檔案不存在時沒有此頁及其分頁按鈕。`macro/refresh.py` 完成後執行該資料夾的私人腳本重寫此檔，失敗只保留舊檔 |
 
 改動 `server/*.py` 後要重新啟動 `serve.py` 才生效；改動 `macro/index.html`、數據或 `evidence/` 的人手檔案後，執行 `python3 macro/refresh.py --render-only` 即可。「更新全部數據」會分別觸發兩個 board 的更新，各自保留原有的鎖及失敗回退機制；宏觀更新後，新聞與連接及 AI 追蹤頁亦會重新載入；本機的完整更新同時擷取新聞標題（`--render-only` 不擷取）。
 

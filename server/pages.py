@@ -673,3 +673,35 @@ def ai_page():
         print("ai page failed:", repr(e), flush=True)
         body = "<h1>AI 追蹤</h1><p class='sub'>資料暫時未能載入；執行 python3 macro/refresh.py --render-only 後重新整理。</p>"
     return page("AI 追蹤", body)
+
+
+# ---------- 估值 (local board only) ----------
+# Read from a private file outside this repository, written by that folder's own script. The page and its tab exist
+# only on the local board and only while the file exists; export_site.py never renders it.
+VAL_VIEW = ROOT.parent / "valuation and research" / "board_view.json"
+
+
+def val_cell(v):
+    """A table cell: text, or a list of [name, https link] pairs shown as links."""
+    if isinstance(v, list):
+        return "<br>".join(link(x[0], x[1]) for x in v if isinstance(x, (list, tuple)) and len(x) == 2) or "—"
+    return escape(str(v))
+
+
+def val_page(path=None):
+    """The local 估值 page: a title, then sections of heading, note and one table. None when the file is missing."""
+    p = Path(path or VAL_VIEW)
+    if not p.exists():
+        return None
+    try:
+        doc = json.loads(p.read_text(encoding="utf-8"))
+        out = [f'<h1>{escape(doc.get("title") or "估值")}</h1><p class="sub">更新：{escape(doc.get("updated") or "—")}</p>']
+        for sec in doc.get("sections", []):
+            rows = ["<tr>" + "".join(f"<td>{val_cell(c)}</td>" for c in r) + "</tr>" for r in sec.get("rows", [])]
+            out.append(f'<section class="card"><h2>{escape(sec.get("heading", ""))}</h2><p class="sub">{escape(sec.get("note", ""))}</p>'
+                       + table(sec.get("head", []), rows, "stack") + "</section>")
+        body = "\n".join(out)
+    except (OSError, ValueError, TypeError, AttributeError, KeyError) as e:
+        print("val page failed:", repr(e), flush=True)
+        body = "<h1>估值</h1><p class='sub'>資料暫時未能載入。</p>"
+    return page("估值", body)

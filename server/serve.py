@@ -31,7 +31,7 @@ from urllib.parse import urlsplit
 import macro_summary as ms
 import us_economy_view
 from macro_view import regroup
-from pages import ai_page, news_page
+from pages import VAL_VIEW, ai_page, news_page, val_page
 
 HERE = Path(__file__).resolve().parent
 PROJECT = HERE.parent
@@ -142,6 +142,17 @@ def macro_parts():
             "useco": part("美國經濟", us_economy_view.page)}
 
 
+def shell(view=None):
+    """The tab shell. The local-only 估值 tab is added while the private view file exists (export_site.py reads
+    index.html itself, so the public site never has it)."""
+    html = (HERE / "index.html").read_text(encoding="utf-8")
+    if not Path(view or VAL_VIEW).exists():
+        return html
+    return (html.replace("AI 追蹤</button>", 'AI 追蹤</button>\n  <button type="button" data-view="val" aria-pressed="false">估值</button>', 1)
+                .replace('src="ai/"></iframe>', 'src="ai/"></iframe>\n  <iframe id="val" class="off" title="估值" src="val/"></iframe>', 1)
+                .replace("const VIEWS = ['inst', 'macro', 'news', 'ai']", "const VIEWS = ['inst', 'macro', 'news', 'ai', 'val']", 1))
+
+
 class Handler(BaseHTTPRequestHandler):
     def reply(self, code, body, ctype="text/html; charset=utf-8"):
         self.send_response(code)
@@ -182,12 +193,15 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(403, b"Invalid host", "text/plain")
         path = urlsplit(self.path).path
         if path in ("/", "/index.html"):
-            return self.reply(200, (HERE / "index.html").read_bytes())
+            return self.reply(200, shell().encode("utf-8"))
+        if path in ("/val/", "/val/index.html"):
+            html = val_page()
+            return self.reply(200, html.encode("utf-8")) if html else self.reply(404, b"Not found", "text/plain")
         if path in ("/news/", "/news/index.html"):
             return self.reply(200, news_page(local=True).encode("utf-8"))   # local only: adds the watchlist coverage line
         if path in ("/ai/", "/ai/index.html"):
             return self.reply(200, ai_page().encode("utf-8"))
-        if path in ("/inst", "/macro", "/news", "/ai"):
+        if path in ("/inst", "/macro", "/news", "/ai", "/val"):
             self.send_response(302)
             self.send_header("Location", path + "/")
             self.end_headers()

@@ -237,6 +237,14 @@ def run(render_only=False, root=ROOT):
             promote(pairs, run_dir/'previous')
             result = dict(state='success', session=session, checked_at=meta['checked_at'], groups=meta['groups'],
                           borrower_references=bond_results, ai_summary_updated=False)
+            view = board.parent/'valuation and research'/'Backtests'/'scripts'/'59_board_view.py'
+            if view.exists():   # local-only 估值 page: a private script outside this repository; a failure keeps its previous file
+                try:
+                    with (run_dir/'execution.log').open('a') as log:
+                        subprocess.run([sys.executable, str(view)], cwd=view.parent, stdout=log, stderr=log, check=True, timeout=300)
+                    result['local_view'] = 'written'
+                except (subprocess.CalledProcessError, subprocess.TimeoutExpired, OSError):
+                    result['local_view'] = 'previous kept'
             if news_ok is not None: result['news_feed'] = 'fetched' if news_ok else 'previous kept'
             if not render_only: result['us_economy'] = 'fetched' if useco_ok else 'previous kept'
             atomic_json(run_dir/'result.json', result)

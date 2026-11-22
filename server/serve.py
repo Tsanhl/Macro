@@ -132,10 +132,10 @@ def macro_parts():
         session = ms.load("refresh_meta")[0]["session"]
     except Exception:
         session = None
-    # 現在要看 and the stock cards come first, then the dashboard's 市寬 section, then credit, rates and funds, then rotation
-    macro = [part("現在要看", ms.now_card, session), part("AI 拋售", ms.ai_sell_card, session)]
-    macro2 = [part("信用總表", ms.credit_table), part("美債", ms.bonds_card, session), part("股債波動", ms.vol_card),
-              part("資金", ms.funds_card)]
+    # order (user, 2026-11-22): 現在要看, then 資金, 美債, 股債波動, 信用總表, AI 拋售; the dashboard's 市寬 and 板塊輪動 follow
+    macro = [part("現在要看", ms.now_card, session), part("資金", ms.funds_card), part("美債", ms.bonds_card, session),
+             part("股債波動", ms.vol_card), part("信用總表", ms.credit_table), part("AI 拋售", ms.ai_sell_card, session)]
+    macro2 = []
     return {"macro": "\n".join(macro), "macro2": "\n".join(macro2), "oil": part("油市總結", ms.oil_summary),
             "oil_curve": part("Brent 期貨曲線", ms.oil_curve_card), "ovx": part("OVX 讀數", ms.ovx_html),
             "oil_positions": part("管理資金持倉", ms.oil_positions_card), "war": part("戰事最新進展", ms.war_card),

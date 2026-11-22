@@ -363,12 +363,36 @@ function todayMeaning() {
   out.push(nextDay().text);
   return '<b>意思：</b>' + out.join('');
 }
-function ladder(k, top = '') {  // top: the index's positioning rows, shown under the price
+function ctaFlipRows(k) {  // every trend-model flip price (each horizon and the overall model), so the ladder always shows them
+  const M = D.lv?.markets?.[k], m = mk(k), out = [];
+  (M?.horizons || []).filter(h => h.level != null).forEach(h => out.push({ kind: 'cta', price: h.level, label: `CTA ${h.k} 日翻轉價`,
+    up: `收市升穿：${h.k} 日訊號轉 long`, down: `收市跌穿：${h.k} 日訊號轉 short` }));
+  if (m?.flip_level != null) out.push({ kind: 'cta', price: m.flip_level, label: 'CTA 綜合翻轉價',
+    up: '收市高於此價：模型為 long（買方）', down: '收市低於此價：模型為 short（賣方）' });
+  return out;
+}
+function posSummary(k) {  // one sentence above 持倉及模型: who added or cut, where the trend model stands and turns, vol control
+  const r = cftcRow(CODE[k]), m = mk(k), V = vcOf(k), lev5 = vc5(k), M = D.lv?.markets?.[k], out = [];
+  const who = { am: '資產管理', lev: '槓桿基金' };
+  if (r) { const g = ['am', 'lev'].filter(x => r.cats[x]); if (g.length) out.push(g.map(x => { const a = act(r.cats[x].net, r.cats[x].chg); return `${who[x]}${/^[a-z]/i.test(a) ? ' ' : ''}${a}${a.startsWith('轉') ? '' : `（現${r.cats[x].net >= 0 ? '淨 long' : '淨 short'}）`}`; }).join('，')); }
+  if (m) {
+    const px = nowPx(k), H = (M?.horizons || []).filter(h => h.level != null);
+    let t = `CTA 模型持 ${m.pos === 'LONG' ? 'long' : 'short'}` + (H.length ? `（${H.map(h => `${h.k} 日 ${px > h.level ? 'long' : 'short'}`).join('、')}）` : '');
+    if (M) t += `，${flipBrief(k)}`;
+    const near = H.map(h => ({ ...h, d: (h.level / px - 1) * 100 })).sort((a, b) => Math.abs(a.d) - Math.abs(b.d))[0];
+    if (near) t += `；最近的是 ${near.k} 日翻轉價 <b>${est(near.level)}</b>（${sgn(near.d, 1)}%），收市${px > near.level ? '跌穿就轉 short' : '升穿就轉 long'}`;
+    out.push(t);
+  }
+  if (V?.lev != null) out.push(`波動率控制倉位 ${fmt(V.lev * 100)}%${lev5 == null ? '' : `，五日 ${sgn(lev5 * 100)} 個百分點`}（波動越大倉位越輕，市場平靜時會慢慢買回）`);
+  return out.length ? `<p class="small" style="margin:4px 0 6px"><b>總結：</b>${out.join('；')}。</p>` : '';
+}
+function ladder(k, top = '') {  // 1. 水平 (every CTA flip always shown, option ranges in one line), then 2. 持倉及模型 when top is given
   const M = D.lv.markets[k], px = nowPx(k), live = k === 'VIX' ? liveVix() : liveOf(k);
   const rg = (M.ranges || []).filter(r => r.pct != null);
   const lim = rg.length ? Math.max(...rg.map(r => Math.abs(r.pct))) * 1.3 : 100;
-  const must = x => x.kind === 'cta' && (x.label.includes('綜合') || x.down.includes('全部 short'));
-  const all = M.levels || [], keep = showAll[k] ? all : all.filter(x => Math.abs(x.price / px - 1) * 100 <= lim || must(x));
+  const must = x => x.kind === 'cta';   // flip prices are always shown, however far
+  const base = M.levels || [], all = [...base, ...(k === 'VIX' ? [] : ctaFlipRows(k)).filter(f => !base.some(x => x.kind === 'cta' && x.label === f.label))];
+  const keep = showAll[k] ? all : all.filter(x => Math.abs(x.price / px - 1) * 100 <= lim || must(x));
   const rows = [...keep.map(x => ({ ...x })), { now: true, price: px }].sort((a, b) => b.price - a.price);
   const nowLabel = live ? '現價（延遲）' : `${md(M.date)} 收市${ST.stale ? '（過時）' : ''}`;
   const body = rows.map(x => {
@@ -378,14 +402,15 @@ function ladder(k, top = '') {  // top: the index's positioning rows, shown unde
   }).join('');
   const chg = live ? (k === 'VIX' ? sgn(live.chg, 2) : sgn(live.chg, 2) + '%') : (k === 'VIX' ? sgn(M.chg, 2) : sgn(M.chg, 2) + '%');
   const noD1 = k === 'ES' && !rg.some(r => r.src === 'VIX1D');
-  const ranges = (noD1 && rg.length ? '<tr><td class="l nw" colspan="4">VIX1D 缺失，未能給出下一交易日的一個標準差。</td></tr>' : '') + rg.map(r => `<tr><td class="l nw">${r.label}</td><td>±${fmt(r.pct, 2)}%</td><td class="nw">${r.range ? `${fmt(r.range[0])} 至 ${fmt(r.range[1])}` : '—'}</td><td class="l muted small">${esc(r.basis)}${r.level != null ? `（${fmt(r.level, 2)}，${md(r.date)}）` : ''}</td></tr>`).join('');
+  const ranges = rg.length ? `<p class="note small" style="margin:6px 0 0"><b>期權定價範圍</b>（按 ${md(M.date)} 收市；約三分之二的日子在範圍內，不是上下限）：`
+    + rg.map(r => `${r.label} ${r.range ? `${fmt(r.range[0])} 至 ${fmt(r.range[1])}` : '—'}（±${fmt(r.pct, 2)}%）`).join('；')
+    + `。${noD1 ? 'VIX1D 缺失，未能給出下一交易日的範圍。' : ''}</p>` : '';
   const hidden = all.length - keep.length;
   return `<div class="card" data-ds="${k === 'VIX' ? 'lv' : 'lv,cta'}"><h3>${esc(M.name)}</h3><div class="price">${lvl(px)} <span class="meta">${chg}${live ? `，${live.time}（英國時間）` : `，${M.date} 收市`}</span></div>
-    ${top ? `<h4>持倉及模型</h4>${top}` : ''}
-    ${ranges ? `<h4>期權定價的波幅（按 ${md(M.date)} 收市）</h4><table>${ranges}</table>
-    <p class="note small" style="margin:4px 0 0">÷ √252 得出一日的一個標準差：假設常態分佈，約三分之二的交易日波幅在此之內。跨式價格約等於到期前的平均波幅（約 0.8 個標準差）。兩者都不是上下限。</p>` : ''}
-    <h4>水平階梯</h4><table><tr><th class="l">水平</th><th>距離</th><th class="l">是甚麼</th><th class="l">收市穿越的意思</th></tr>${body}</table>
-    ${hidden > 0 || showAll[k] ? `<button class="linkbtn" data-all="${k}">${showAll[k] ? '只看較近的水平' : `顯示全部（另有 ${hidden} 個較遠水平）`}</button>` : ''}</div>`;
+    <h4>${top ? '1. ' : ''}水平</h4><table><tr><th class="l">水平</th><th>距離</th><th class="l">是甚麼</th><th class="l">收市穿越的意思</th></tr>${body}</table>
+    ${hidden > 0 || showAll[k] ? `<button class="linkbtn" data-all="${k}">${showAll[k] ? '只看較近的水平' : `顯示全部（另有 ${hidden} 個較遠水平）`}</button>` : ''}
+    ${ranges}
+    ${top ? `<h4>2. 持倉及模型</h4>${part(() => posSummary(k))}${top}` : ''}</div>`;
 }
 function curveAt(c, m) { const x = (c || []).find(p => Math.abs(p.move - m) < 0.01); return x ? x.flow : null; }
 function flows() {
@@ -433,7 +458,7 @@ function vix1dArea() {  // the S&P's next-session implied volatility: level, nex
   if (rv) rows.push(['實際對隱含波幅', `${fmt(rv.real, 2)}% 對 ${fmt(rv.imp, 2)}%（${md(rv.date)}）`, `${md(rv.date)} 標普收市對收市 ${sgn(rv.move, 2)}%，實際波幅${rv.real > rv.imp ? '大過' : rv.real < rv.imp ? '小於' : '等於'}前一晚（${md(rv.prev_date)}）VIX1D 所定價的一日波幅。`]);
   return level + readings('VIX1D 讀數', rows, 'lv', `<p class="note small" style="margin-top:6px">${R33}</p>`);
 }
-function indexCard(k) {  // one block per index: price, positioning, option ranges, level ladder
+function indexCard(k) {  // one block per index: price, 1. 水平 (ladder and option ranges), 2. 持倉及模型 (summary and table)
   if (D.lv?.markets?.[k]) return part(() => ladder(k, part(() => posToday(k))));
   return `<div class="card"><h3>${NAME[k]}</h3>${D.cftc || D.cta || D.vc ? `<h4>持倉及模型</h4>${part(() => posToday(k))}` : ''}${EMPTY}</div>`;
 }

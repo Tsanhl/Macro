@@ -1,12 +1,11 @@
 """Regroups the macro board's page (macro/index.html, served on 8766) as it is served. macro/ is never edited.
 
 Three pages:
-  宏觀  one scrolling page (reorganised 2026-11-22, user): 現在要看 (data dates, the transmission chain, four
-        conclusions, the market state and 之後要看) and AI 拋售：半導體與避險資產 in section rbmacro; then the dashboard's
-        breadth section (advance-decline line with SPY and the McClellan oscillator; the 50-day share chart is hidden);
-        then section rbmacro2 with 信用總表, 美債, 股債波動 and 資金 (TGA and net liquidity); and, at the bottom, the
-        dashboard's relative rotation graph. The macro_summary cards are drawn by RB_JS below; the two dashboard sections
-        are styled as single cards like the others, each with its heading and one data line from macro_summary.
+  宏觀  one scrolling page (order set by the user, 2026-11-22): 現在要看 (data dates, the transmission chain, four
+        conclusions, the market state, the bounce check and 之後要看), 資金 (TGA and net liquidity), 美債, 股債波動, 信用總表
+        and AI 拋售：半導體與避險資產 (all from macro_summary.py, charts drawn by RB_JS below); then the dashboard's breadth
+        section (advance-decline line with SPY and the McClellan oscillator; the 50-day share chart is hidden) and, at the
+        bottom, its relative rotation graph. Section rbmacro2 is kept for a later split and is empty.
   美國經濟  growth, labour, inflation, consumers, housing, fiscal and financial conditions from FRED
         (server/us_economy_view.py, data from macro/us_economy.py): a table and small charts per section, data only.
   油價  the 油市總結 (macro_summary.oil_summary), then the dashboard's oil page with these changes: its curve card is
@@ -358,13 +357,13 @@ def regroup(html, parts):
         html = html.replace(old, new, 1)
     html = re.sub(r'<nav class="rb-tabs".*?</nav>', NAV, html, count=1, flags=re.S)
     section = f'<section class="rb-page" id="rbmacro" role="tabpanel" aria-labelledby="tab-overview">\n{parts["macro"]}\n</section>\n  '
-    # 市寬 before 板塊輪動 (user, 2026-11-22: the rotation graph goes to the bottom of the page)
+    # order (user, 2026-11-22): the macro cards, then 市寬 just above 板塊輪動 at the bottom
     m = re.search(r'<section class="rb-page" id="breadth".*?</section>\s*', html, flags=re.S)
     breadth = ""
     if m:
         breadth, html = m.group(0), html.replace(m.group(0), "", 1)
     section2 = f'<section class="rb-page" id="rbmacro2" role="tabpanel" aria-labelledby="tab-overview">\n{parts.get("macro2", "")}\n</section>\n  '
-    html = html.replace(ROTATION_OPEN, section + breadth + section2 + ROTATION_OPEN, 1)
+    html = html.replace(ROTATION_OPEN, section + section2 + breadth + ROTATION_OPEN, 1)
     html = html.replace(ROTATION_HEAD, parts.get("rotation_head", ""), 1).replace(BREADTH_HEAD, parts.get("breadth_head", ""), 1)
     useco = f'<section class="rb-page" id="useco" role="tabpanel" aria-labelledby="tab-useco" hidden>\n{parts.get("useco", "")}\n</section>\n  '
     html = html.replace(OIL_OPEN, useco + OIL_OPEN + "\n" + parts["oil"], 1)

@@ -59,7 +59,7 @@ class GuideTests(unittest.TestCase):
 
     def test_page_has_every_section_and_no_script(self):
         html = guide.guide_page()
-        for h in ("一、每個指標的意思", "二、三張核對表", "三、唯一經測試的數字", "傳導鏈", "股債波動", "板塊輪動及市場狀態"):
+        for h in ("一、每個指標的意思", "二、三張核對表", "三、經測試的數字", "反彈確認", "傳導鏈", "股債波動", "板塊輪動及市場狀態"):
             self.assertIn(h, html)
         self.assertNotIn("<script", html)
         self.assertNotIn("買入", html)

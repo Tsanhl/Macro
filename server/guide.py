@@ -1,10 +1,11 @@
 """讀法 (user, 2026-11-22): how to read the board. First what every indicator measures and how to read it (fixed text),
 then three checklists whose 現時 column is read from the board's data on every page load: metals sold with stocks or
-on their own fundamentals; rotation or a broad decline; a bounce that the other readings confirm or one they do not.
+on their own fundamentals; rotation or a broad decline; a bounce that the other readings confirm or one they do not;
+last the tested numbers (R29): the market state and the bounce check with today's three checks and the history by score.
 
 Each 現時 reading is put in a column by definition (a sign, a direction against a week earlier, or the ±0.25 sampling
-band of a 63-session correlation); nothing here is a tested signal except the market-state line (R29), which is stated
-as a historical rate. No advice, no position words. The page is the same on the local board and the public snapshot.
+band of a 63-session correlation); nothing here is a tested signal except the market-state line and the bounce check (R29),
+stated as historical rates. No advice, no position words. The page is the same on the local board and the public snapshot.
 """
 from html import escape
 
@@ -228,7 +229,7 @@ def checklists_html():
              ["核對", "如果是基本因素", "如果是跟股市被賣", "現時", "較像"]),
             (breadth_rows, "B. 輪動，還是全面轉差", "輪動＝資金由一組轉到另一組；全面轉差＝大部分股票及信用一起轉差。",
              ["讀數", "輪動", "全面轉差", "現時", "較像"]),
-            (bounce_rows, "C. 反彈有沒有得到其他讀數確認", "反彈出現時逐項看；股價反彈而信用不改善，是常見的假反彈特徵（一般原則，未經我們測試）。",
+            (bounce_rows, "C. 反彈有沒有得到其他讀數確認", "反彈出現時逐項看；經回測的三項見頁底「反彈確認」。股價反彈而信用不改善，是常見的假反彈特徵（一般原則，這一句未經測試）。",
              ["讀數", "得到確認（較健康）", "未得到確認（較易再跌）", "現時", "較像"])):
         try:
             rows, sides = fn(D)
@@ -239,14 +240,34 @@ def checklists_html():
     return "".join(out)
 
 
+def bounce_html():
+    """The tested bounce check (R29): today's three checks, then what bounces did by the number of checks met."""
+    try:
+        items, score, dd60 = ms.bounce_check()
+    except Exception as e:
+        print("guide bounce failed:", repr(e), flush=True)
+        return '<p class="sub">反彈確認暫時未能生成。</p>'
+    now = grid(["項目", "現時", "達到"], [tr([name, reading, "是" if met else "否" if met is not None else "—"], now=(1,)) for name, met, reading in items])
+    hist = grid(["達到項數", "20 日內跌穿之前 20 日低位", "每段跌勢只計一次", "60 日後中位數", "60 日後上升"],
+                [tr([f"{k} 項" + ("（現時）" if k == score else ""), f"{ms.BOUNCE_FAIL[k][0]}%", f"{ms.BOUNCE_FAIL[k][1]}%",
+                     ms.BOUNCE_F60[k][0], f"{ms.BOUNCE_F60[k][1]}%"]) for k in range(4)])
+    where = (f"標普現距 60 日高位 {ms.sg(dd60, 1)}%，" + ("屬測試的範圍。" if dd60 is not None and dd60 <= -5 else "未到測試的範圍（5% 或以上），以下歷史只作參考。")
+             if dd60 is not None else "")
+    return ("<h3>反彈確認（R29，2007 年以來的回測）</h3>"
+            '<p class="sub">測試的反彈日：標普距 60 日高位跌 5% 或以上時，單日升 0.5% 或以上（共 388 日，整體 42% 失敗）。'
+            "失敗＝之後 20 個交易日內收市跌穿之前 20 日的低位，即牛市陷阱。三項中最有分辨力的是標普回到 20 日平均以上"
+            "（做到的失敗率 24%，做不到的 56%）。</p>"
+            + f'<p class="sum">現時 {score}／3 項達到。{escape(where)}</p>' + now + hist
+            + '<p class="sub">失敗不等於之後幾個月都跌：0 項達到的反彈，60 日後中位數仍是正數；但途中常先再創新低。這是歷史比率，不是預測。</p>')
+
+
 def tested_html():
     try:
         line = ms.line_state()
     except Exception:
         line = "市場狀態暫時未能生成。"
-    return ('<h2>三、唯一經測試的數字</h2>' + f"<p>{escape(line)}</p>"
-            + '<p class="sub">其他讀數都是按定義的描述，不是經測試的訊號，不要單憑一項下判斷。'
-              "要知道某個狀態之後的反彈歷史上通常走多遠，要另做回測。</p>")
+    return ('<h2>三、經測試的數字</h2><h3>市場狀態（R29）</h3>' + f"<p>{escape(line)}</p>" + bounce_html()
+            + '<p class="sub">其他讀數都是按定義的描述，不是經測試的訊號，不要單憑一項下判斷。</p>')
 
 
 def guide_page():

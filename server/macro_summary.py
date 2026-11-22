@@ -6,8 +6,8 @@ section, and on the 油價 page the 油市總結, the Brent curve card with its 
 five-contract managed-money card and the 戰事最新進展 card (the newest war headlines from macro/data/news_feed.json,
 which the board's background fetch updates every 30 minutes, above the hand-kept events and escalation ladder).
 
-Every line states levels, dates, direction and size. The only tested statistic is the market-state line, from
-Backtests/results/29_market_state_bounce.txt (R29, data from June 2007), stated as a historical rate; the 美債 section
+Every line states levels, dates, direction and size. The tested statistics are the market-state line and the bounce
+check, both from Backtests/results/29_market_state_bounce.txt (R29, data from 2007), stated as historical rates; the 美債 section
 adds one historical sentence from R10/R32 on the curve shapes. No line adds a
 cut-off of its own, gives advice or makes a forecast. A reading that is missing or older than expected is said so.
 """
@@ -31,6 +31,13 @@ _cache = {"t": 0.0, "rows": []}
 ALL_DAYS_RISK = "34%"
 STATE_RISK = {"normal": ALL_DAYS_RISK, "rotation": "29%", "narrow_weak": "49%", "broad": "42%", "worse": "48%"}
 STATE_NAME = {"rotation": "輪動", "narrow_weak": "指數弱", "broad": "大市下跌", "worse": "大市惡化"}
+# Bounce check, also R29 (scripts/market_state_bounce.py): a bounce day is one when the S&P is 5% or more below its 60-day
+# high and rises 0.5% or more; it "fails" when within the next 20 sessions the S&P closes below its prior 20-day low.
+# Three checks on the bounce day: HYG ÷ IEF above its level five sessions earlier; VIX below VIX3M; S&P above its 20-day
+# average. Per number of checks met: share that failed (all bounce days; each drawdown episode once), and the median
+# S&P return 60 sessions later with the share up. n = 388 bounce days; overall 42% failed.
+BOUNCE_FAIL = {0: (58, 69), 1: (49, 56), 2: (40, 48), 3: (24, 34)}
+BOUNCE_F60 = {0: ("+3.6%", 64), 1: ("+4.6%", 72), 2: ("+2.7%", 61), 3: ("+4.6%", 74)}
 STATE_MEAN = {"rotation": "跌幅集中在大型股", "narrow_weak": "一般股份比大型股弱", "broad": "跌勢擴散到大部分股份，信用未轉弱",
               "worse": "跌勢擴散到大部分股份，同時信用轉弱"}
 
@@ -130,6 +137,42 @@ def state_of(m):
     if m["ew_dd"] > -5:
         return "rotation" if m["ew_rel20"] > 0 else "narrow_weak"
     return "broad" if not m["credit_below_50"] else "worse"
+
+
+def bounce_items(hyg_5d, vix, vix3m, spx):
+    """The three tested bounce checks from the latest readings: HYG ÷ IEF's change over five sessions, VIX and VIX3M,
+    and the S&P closes (oldest first). Returns [(name, met or None, reading)], the score and the S&P's distance from its
+    60-day high in per cent."""
+    items = [("HYG÷IEF 高於 5 日前", None if hyg_5d is None else hyg_5d > 0, f"五日 {sg(hyg_5d, 2)}%" if hyg_5d is not None else "—"),
+             ("VIX 低於 VIX3M", None if None in (vix, vix3m) else vix < vix3m,
+              f"VIX {vix:.1f}、VIX3M {vix3m:.1f}" if None not in (vix, vix3m) else "—")]
+    if len(spx) >= 20:
+        ma = sum(spx[-20:]) / 20
+        items.append(("標普高於 20 日平均", spx[-1] > ma, f"標普 {spx[-1]:,.0f}，20 日平均 {ma:,.0f}"))
+    else:
+        items.append(("標普高於 20 日平均", None, "—"))
+    dd60 = (spx[-1] / max(spx[-60:]) - 1) * 100 if spx else None
+    return items, sum(1 for _, met, _ in items if met), dd60
+
+
+def bounce_check():
+    R = {x["pair"]: x for x in load("ratio_summary")}
+    f = first("flowmodel_now") or {}
+    spx = [r["spx"] for r in load("flowmodel") if r.get("spx")]
+    return bounce_items((R.get("HYG_IEF") or {}).get("chg5d"), f.get("vix"), f.get("vix3m"), spx)
+
+
+def bounce_line():
+    """One line for 現在要看: today's score on the three tested checks and what bounces with that score did."""
+    items, score, dd60 = bounce_check()
+    fail, dedup = BOUNCE_FAIL[score]
+    f60, up = BOUNCE_F60[score]
+    checks = "；".join(f"{name}：{'是' if met else '否' if met is not None else '—'}（{reading}）" for name, met, reading in items)
+    where = (f"標普現距 60 日高位 {sg(dd60, 1)}%，" + ("屬測試的範圍（5% 或以上）" if dd60 is not None and dd60 <= -5 else "未到測試的範圍（5% 或以上）")
+             if dd60 is not None else "")
+    return (f"反彈確認（2007 年以來的回測）：現時 {score}／3 項達到——{checks}。{where}；歷史上在這情況下單日升 0.5% 或以上的反彈，"
+            f"有 {score} 項達到的 {fail}% 在之後 20 個交易日內跌穿之前 20 日的低位（每段跌勢只計一次 {dedup}%），"
+            f"但 60 日後的中位數是 {f60}，{up}% 上升。3 項都達到的失敗率是 {BOUNCE_FAIL[3][0]}%。這是歷史比率，不是預測。")
 
 
 def line_state():
@@ -354,6 +397,10 @@ def now_card(session, today=None):
         parts.append(note(line_state()))
     except Exception as e:
         print("market state failed:", repr(e), flush=True)
+    try:
+        parts.append(p(bounce_line()))
+    except Exception as e:
+        print("bounce check failed:", repr(e), flush=True)
     try:
         rows = watch(session)
     except Exception as e:

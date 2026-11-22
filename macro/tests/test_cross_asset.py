@@ -151,3 +151,26 @@ class VerdictTests(unittest.TestCase):
         h = ms.chain_html(nodes)
         self.assertIn("本週轉差的有 AI 股、投資級；未轉差的有 資金市場。", h)
         self.assertIn('class="rb-node hot"', h)
+
+
+class BounceTests(unittest.TestCase):
+    """The tested bounce check (R29) on the 宏觀 page and the 讀法 page."""
+
+    def test_no_check_met_now(self):
+        spx = [7819.0] + [7500.0] * 58 + [6910.0]
+        items, score, dd60 = ms.bounce_items(-2.54, 35.9, 30.9, spx)
+        self.assertEqual(score, 0)
+        self.assertEqual([met for _, met, _ in items], [False, False, False])
+        self.assertAlmostEqual(dd60, (6910 / 7819 - 1) * 100)
+
+    def test_all_checks_met_and_missing_data(self):
+        items, score, _ = ms.bounce_items(0.4, 18.0, 20.0, [100.0] * 19 + [104.0])
+        self.assertEqual(score, 3)
+        items, score, _ = ms.bounce_items(None, None, 20.0, [100.0] * 5)
+        self.assertEqual(score, 0)
+        self.assertEqual([met for _, met, _ in items], [None, None, None])
+
+    def test_history_is_the_tested_table(self):
+        self.assertEqual(ms.BOUNCE_FAIL[0], (58, 69))
+        self.assertEqual(ms.BOUNCE_FAIL[3], (24, 34))
+        self.assertTrue(all(ms.BOUNCE_FAIL[k][0] > ms.BOUNCE_FAIL[k + 1][0] for k in range(3)))

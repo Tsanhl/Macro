@@ -909,10 +909,14 @@ def credit_table():
     h = R["HYG_IEF"]
     row("HYG／IEF（%）", f"{sg(h['vs_50d'], 1)} 對 50 日線", sg(h["chg1d"], 2), sg(h["chg5d"], 2), sg(h["chg20d"], 2), sg(h["chg60d"], 2), "—",
         md(load("refresh_meta")[0]["session"]), "息差遲一日公布，這是當日的價格代理；低於 50 日線是惡化條件之一")
+    proxies = ((first("cross_asset") or {}).get("proxies") or {}).get("rows", [])
+    # the IG ratio sits under HYG／IEF: the same measure (a bond ETF against Treasuries, read against its 50-session line)
+    for x in (x for x in proxies if x["t"] == "LQD_IEF"):
+        row("LQD／IEF（%）", f"{sg(x['vs_50d'], 1)} 對 50 日線", sg(x["chg_1"], 2), sg(x["chg_5"], 2), sg(x["chg_21"], 2), sg(x["chg_63"], 2), "—",
+            md(x["date"]), "投資級公司債 ETF 對中期國債；IG 息差遲一日公布，這是同日的價格代理")
     PROXY_MEAN = {"BIZD": "上市 BDC（借錢給私人公司的貸款機構）ETF 的價格；私募信貸本身少有報價，這是價格代理，不是息差",
                   "BKLN": "槓桿貸款（浮息銀團貸款）ETF 的價格；價格代理，不是息差"}
-    PROXY_MEAN["LQD_IEF"] = "投資級公司債 ETF 對中期國債；IG 息差遲一日公布，這是同日的價格代理"
-    for x in ((first("cross_asset") or {}).get("proxies") or {}).get("rows", []):
+    for x in (x for x in proxies if x["t"] != "LQD_IEF"):
         row(f"{x['name']}（%）", f"{sg(x['off_high'], 1)} 對一年高位" if "off_high" in x else f"{sg(x['vs_50d'], 1)} 對 50 日線", sg(x["chg_1"], 2), sg(x["chg_5"], 2), sg(x["chg_21"], 2),
             sg(x["chg_63"], 2), "—", md(x["date"]), PROXY_MEAN.get(x["t"], "價格代理，不是息差"))
     ys = series("ig_yield")

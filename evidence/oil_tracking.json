@@ -822,7 +822,7 @@
   ],
   "war": {
     "about": "戰事最新進展（用戶 2026-11-15 要求，油價頁）：有日期及來源連結的事件，按升級階梯分級。只記錄我們打開過的具名新聞機構報道或官方文件寫明的事件；只見標題、未讀原文的報道，以及社交媒體貼文，都不記錄；不作評分或機率。",
-    "updated": "2026-11-15",
+    "updated": "2026-11-22",
     "rule": "卡內兩行讀數：最近一宗事件的級別（同日有多宗時取較高一級），及清單期內到過的最高級別與其最近一次日期；不是評分或機率，較高級別的情況不會因此當作已經停止。一宗事件按它符合的最高一級記錄。種子事件只取自本檔及本地油價研究筆記中有日期及連結的紀錄；之後人手加入。",
     "ladder": [
       {
@@ -1054,8 +1054,80 @@
         "source": "https://gcaptain.com/middle-east-oil-flows-near-prewar-levels-defy-hormuz-attacks/",
         "second_hand": true,
         "from": "oil_tracking.json ukmto_attacks"
+      },
+      {
+        "date": "2026-11-16",
+        "text": "英國海事貿易行動處（UKMTO）報告一艘出海油輪在荷姆茲海峽被不明拋射物擊中、機艙起火；同日另一艘油輪在阿曼 Khasab 以北約 7 海里遇襲失去動力，船員安全",
+        "rung": 5,
+        "provider": "gCaptain",
+        "source": "https://gcaptain.com/ukmto-reports-two-tanker-attacks-in-strait-of-hormuz/",
+        "second_hand": true,
+        "from": "戰事事實收集 2026-11-22"
+      },
+      {
+        "date": "2026-11-17",
+        "text": "UKMTO 報告 Khasab 以北同一艘油輪再遇襲起火，船員下落不明",
+        "rung": 5,
+        "provider": "Khaleej Times（路透）",
+        "source": "https://www.khaleejtimes.com/gulf/tanker-crew-unaccounted-for-second-attack-oman-khasab",
+        "second_hand": true,
+        "from": "戰事事實收集 2026-11-22"
+      },
+      {
+        "date": "2026-11-17",
+        "text": "美軍戰機空襲格什姆島（Qeshm）的革命衛隊導彈發射場，美方官員稱屬自衛；伊朗 Mehr 通訊社稱無傷亡",
+        "rung": 4,
+        "provider": "The National",
+        "source": "https://www.thenationalnews.com/news/us/2026/11/17/us-jets-strike-irgc-missile-launch-site-on-irans-qeshm-island-in-self-defence/",
+        "second_hand": true,
+        "from": "戰事事實收集 2026-11-22"
+      },
+      {
+        "date": "2026-11-17",
+        "text": "伊朗與阿曼及卡塔爾調停人會面；歐洲官員形容調停仍在但分歧大",
+        "rung": 1,
+        "provider": "路透（經 BOE Report 轉載）",
+        "source": "https://boereport.com/2026/11/17/trump-and-tehran-gamble-on-time-as-iran-war-stalemate-deepens/amp/",
+        "second_hand": true,
+        "from": "戰事事實收集 2026-11-22"
+      },
+      {
+        "date": "2026-11-18",
+        "text": "胡塞武裝向利雅得及沙特南部發射導彈；沙特官方稱利雅得公共投資基金大樓受損、無人受傷，聯軍稱已攔截多枚導彈",
+        "rung": 3,
+        "provider": "Al Jazeera（路透）",
+        "source": "https://www.aljazeera.com/news/2026/11/19/saudi-led-coalition-intercepts-houthi-missiles-targeting-riyadh-and-south",
+        "second_hand": true,
+        "from": "戰事事實收集 2026-11-22"
+      },
+      {
+        "date": "2026-11-20",
+        "text": "UKMTO 報告一艘出海油輪在 Khasab 以北約 8 海里被不明拋射物擊中起火、無人傷亡；革命衛隊稱是觸雷",
+        "rung": 5,
+        "provider": "Arab News（路透）",
+        "source": "https://www.arabnews.com/middle-east/tanker-hit-in-strait-of-hormuz-as-missile-strikes-irans-qeshm-island-3013176",
+        "second_hand": true,
+        "from": "戰事事實收集 2026-11-22"
+      },
+      {
+        "date": "2026-11-21",
+        "text": "UKMTO 報告 Khasab 附近兩宗事件，其中一艘出海油輪被不明拋射物擊中；伊朗海軍稱是觸雷",
+        "rung": 5,
+        "provider": "Gulf News",
+        "source": "https://gulfnews.com/uae/middle-east-war-8-things-uae-residents-need-to-know-tonight-november-21-1.500756425",
+        "second_hand": true,
+        "from": "戰事事實收集 2026-11-22"
+      },
+      {
+        "date": "2026-11-21",
+        "text": "巴林內政部稱伊朗襲擊令一處民用工業設施起火，其後稱兩人受傷；革命衛隊稱以導彈及無人機襲擊巴林的美軍基地",
+        "rung": 3,
+        "provider": "Al Jazeera",
+        "source": "https://www.aljazeera.com/news/2026/11/21/bahrain-says-iranian-attack-causes-fire-at-industrial-facility",
+        "second_hand": true,
+        "from": "戰事事實收集 2026-11-22"
       }
     ],
-    "note": "伊朗方面有關油輪觸雷或起火的說法，各媒體均表示未能獨立證實，所以每一項都寫明是誰的說法；事件取自 ABC News、CBS News、Al Jazeera、CNBC、AP、Gulf Times（引述路透）及 gCaptain 的報道。"
+    "note": "伊朗方面有關油輪觸雷或起火的說法，各媒體均表示未能獨立證實，所以每一項都寫明是誰的說法；UKMTO 的報告是英國海事機構的獨立通報，經媒體轉述。事件取自 ABC News、CBS News、Al Jazeera、CNBC、AP、Gulf Times（引述路透）、gCaptain、Khaleej Times、Arab News、Gulf News、The National 及路透的報道。"
   }
 }

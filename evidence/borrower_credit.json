@@ -404,7 +404,7 @@
           "source_sha256": "ac47497b4857fcc7e7e7cc43035abc72e5ceb072d357a70e864955841146c2f6"
         }
       ],
-      "last_checked_at": "2026-11-20T21:57:35.796547+00:00",
+      "last_checked_at": "2026-11-22T10:25:14.536397+00:00",
       "latest_source_observation": "2026-11-19"
     },
     {
@@ -830,13 +830,33 @@
           "primary_trade_verified": false,
           "eligible_for_signal": false,
           "source_sha256": "b251570cae870a435a25a76601d65a498fb290a010f940e560378db1d2458eef"
+        },
+        {
+          "instrument": "4.95% 2031-02-04",
+          "isin": "US68389XDX03",
+          "currency": "USD",
+          "price_date": "2026-11-20",
+          "clean_price_per_100": 90.1,
+          "yield_pct": 7.74,
+          "yield_type": "YTW semiannual",
+          "provider": "BondTerminal",
+          "price_basis": "vendor_close_per_100",
+          "settlement_assumption": "T+1; valuation/settlement dates not independently verified",
+          "settlement_basis": "T+1",
+          "settlement_verified": false,
+          "source": "https://bondterminal.com/calculator/US68389XDX03",
+          "source_label": "About this bond: Last close",
+          "retrieved_at": "2026-11-22T10:25:14.536397+00:00",
+          "primary_trade_verified": false,
+          "eligible_for_signal": false,
+          "source_sha256": "5346fa7b29ec9e7effbad77c3a1e977619e6cb5ef7e73e6b626aeba671169604"
         }
       ],
-      "last_checked_at": "2026-11-20T21:57:35.796547+00:00",
-      "latest_source_observation": "2026-11-19"
+      "last_checked_at": "2026-11-22T10:25:14.536397+00:00",
+      "latest_source_observation": "2026-11-20"
     }
   ],
-  "last_checked_at": "2026-11-20T21:57:35.796547+00:00",
+  "last_checked_at": "2026-11-22T10:25:14.536397+00:00",
   "cds_reference": [
     {
       "id": "CRWV",

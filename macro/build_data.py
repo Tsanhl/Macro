@@ -609,6 +609,11 @@ def main():
     from macro_watch import build_macro_watch  # TGA (Treasury DTS) and MOVE for the local 宏觀 view; keeps the previous blocks
     mv = close["^MOVE"].dropna() if "^MOVE" in close else pd.Series(dtype=float)
     build_macro_watch(OUT, [(d.strftime("%Y-%m-%d"), float(v)) for d, v in mv.items()])
+    try:  # havens against the AI trade, equity and bond volatility, private-credit proxies; display only, never fails the build
+        from cross_asset import build_cross_asset
+        build_cross_asset(OUT, cutoff)
+    except Exception as e:
+        print(f"  WARNING cross_asset skipped: {e}")
     print("as of", stamp["asof"])
 
 

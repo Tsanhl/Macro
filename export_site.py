@@ -129,8 +129,9 @@ def render(out=OUT):
     (out / "macro" / "refresh.js").write_text(js, encoding="utf-8")
     shutil.copytree(MACRO / "site_private" / "data", out / "macro" / "data", ignore=shutil.ignore_patterns(".*"))
 
-    # 新聞與連接 and AI 追蹤: rendered by server/pages.py from the same local build
-    for name, html in (("news", pages.news_page()), ("ai", pages.ai_page())):
+    # 新聞與連接, AI 追蹤 and 讀法: rendered by server/pages.py and server/guide.py from the same local build
+    import guide
+    for name, html in (("news", pages.news_page()), ("ai", pages.ai_page()), ("guide", guide.guide_page())):
         (out / name).mkdir()
         (out / name / "index.html").write_text(inject(html), encoding="utf-8")
 

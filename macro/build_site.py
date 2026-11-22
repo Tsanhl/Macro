@@ -239,7 +239,7 @@ def main():
         shutil.rmtree(SITE)
     (SITE / "data").mkdir(parents=True)
     data = load_all()
-    for name in ("auctions", "funding", "macro_watch"):  # Treasury auctions, funding market and credit ladder, TGA and MOVE
+    for name in ("auctions", "funding", "macro_watch", "cross_asset"):  # Treasury auctions, funding market and credit ladder, TGA and MOVE, cross-asset
         if (rows := load(name)) is not None:
             data[name] = rows
     data["borrower_credit"] = [json.loads(BORROWER_CREDIT.read_text())] if BORROWER_CREDIT.is_file() else [{"issuers": []}]

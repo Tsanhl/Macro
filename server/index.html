@@ -31,15 +31,17 @@ iframe.off { visibility: hidden; pointer-events: none; }
   <span class="spacer"></span>
   <span id="msg" role="status"></span>
   <button type="button" id="all">更新全部數據</button>
+  <button type="button" data-view="guide" aria-pressed="false">讀法</button>
 </div>
 <main>
   <iframe id="inst" title="機構持倉" src="inst/"></iframe>
   <iframe id="macro" class="off" title="宏觀" src="macro/"></iframe>
   <iframe id="news" class="off" title="新聞與連接" src="news/"></iframe>
   <iframe id="ai" class="off" title="AI 追蹤" src="ai/"></iframe>
+  <iframe id="guide" class="off" title="讀法" src="guide/"></iframe>
 </main>
 <script>
-const VIEWS = ['inst', 'macro', 'news', 'ai'], BOARDS = ['inst', 'macro'], $ = s => document.querySelector(s), stale = new Set();
+const VIEWS = ['inst', 'macro', 'news', 'ai', 'guide'], BOARDS = ['inst', 'macro'], $ = s => document.querySelector(s), stale = new Set();
 function show(v) {
   VIEWS.forEach(x => {
     document.getElementById(x).classList.toggle('off', x !== v);
@@ -68,7 +70,7 @@ async function updateAll() {
         if (s.state !== 'running' && s.state !== 'external_running') {
           if (s.state === 'failed') return `${LABEL[v]}未完成`;
           stale.add(v);
-          if (v === 'macro') { stale.add('news'); stale.add('ai'); }  // both pages are built from the macro board's data
+          if (v === 'macro') { stale.add('news'); stale.add('ai'); stale.add('guide'); }  // these pages are built from the macro board's data
           return `${LABEL[v]}已更新`;
         }
         $('#msg').textContent = '更新中，約需數分鐘…';

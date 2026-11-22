@@ -93,6 +93,27 @@ class SpreadSentenceTests(unittest.TestCase):
         self.assertIn("定價的是近期緊張", ms.curve_move_sentence(rows(1.0, 0.1, -0.2)))
         self.assertIn("近期緊張的溢價減少", ms.curve_move_sentence(rows(-2.5, -0.6, 0.05)))
 
+    def test_brent_week_change_uses_one_contract_through_a_roll(self):
+        # the week Yahoo's continuous BZ=F moved from January to February: 95.84 (Jan, 13 Nov) -> 89.95 (Feb, 20 Nov)
+        rows = [{"month": "2027-01", "close": 92.57, "date": "2026-11-20", "week_date": "2026-11-13", "chg_1w": -3.27},
+                {"month": "2027-02", "close": 89.95, "date": "2026-11-20", "week_date": "2026-11-13", "chg_1w": -3.08}]
+        bz = [{"date": "2026-11-13", "close": 95.84}, {"date": "2026-11-20", "close": 89.95}]
+        line = ms.brent_price_line(rows, bz)
+        self.assertIn("Brent 近月（2027-01 合約）92.57 美元（11月20日），對 11月13日同一合約下降 3.27 美元", line)
+        self.assertIn("已轉到 2027-02 合約", line)
+        self.assertNotIn("5.89", line)  # the cross-contract change is never stated
+
+    def test_brent_line_without_a_roll_and_without_a_curve(self):
+        rows = [{"month": "2027-01", "close": 95.84, "date": "2026-11-13", "week_date": "2026-11-06", "chg_1w": 1.2},
+                {"month": "2027-02", "close": 93.10, "date": "2026-11-13", "week_date": "2026-11-06", "chg_1w": 1.0}]
+        line = ms.brent_price_line(rows, [{"date": "2026-11-13", "close": 95.84}])
+        self.assertIn("對 11月6日同一合約上升 1.20 美元", line)
+        self.assertNotIn("BZ=F", line)
+        bz = [{"date": "2026-11-06", "close": 94.0}, {"date": "2026-11-13", "close": 95.84}]
+        self.assertIn("連續近月（Yahoo BZ=F）95.84 美元", ms.brent_price_line([], bz))
+        self.assertIn("轉倉週的變化會包括換合約", ms.brent_price_line([], bz))
+        self.assertIsNone(ms.brent_price_line([], []))
+
     def test_put_and_call_say_which_side_was_larger_not_who_is_right(self):
         base = {"group": "options", "date": "2026-10-20", "unit": "張", "provider": "X"}
         both = [dict(base, key="brent_put_volume", item="Brent 認沽期權單日成交", value=787000),

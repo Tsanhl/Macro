@@ -31,6 +31,7 @@ from urllib.parse import urlsplit
 import macro_summary as ms
 import us_economy_view
 from macro_view import regroup
+from guide import guide_page
 from pages import VAL_VIEW, ai_page, news_page, val_page
 
 HERE = Path(__file__).resolve().parent
@@ -131,11 +132,11 @@ def macro_parts():
         session = ms.load("refresh_meta")[0]["session"]
     except Exception:
         session = None
-    macro = [part("每日摘要", lambda: f'<div class="rb-card rb-wide" id="rb-summary">{ms.build()}</div>'),
-             part("TGA", ms.tga_card), part("MOVE 及淨流動性", ms.move_liq_card), part("美債", ms.bonds_card, session),
-             part("信用總表", ms.credit_table),
-             part("AI／半導體", ms.ai_card, session), part("市寬與輪動摘要", ms.market_summary_card)]
-    return {"macro": "\n".join(macro), "oil": part("油市總結", ms.oil_summary),
+    # 現在要看 and the stock cards come first, then the dashboard's 市寬 section, then credit, rates and funds, then rotation
+    macro = [part("現在要看", ms.now_card, session), part("AI 拋售", ms.ai_sell_card, session)]
+    macro2 = [part("信用總表", ms.credit_table), part("美債", ms.bonds_card, session), part("股債波動", ms.vol_card),
+              part("資金", ms.funds_card)]
+    return {"macro": "\n".join(macro), "macro2": "\n".join(macro2), "oil": part("油市總結", ms.oil_summary),
             "oil_curve": part("Brent 期貨曲線", ms.oil_curve_card), "ovx": part("OVX 讀數", ms.ovx_html),
             "oil_positions": part("管理資金持倉", ms.oil_positions_card), "war": part("戰事最新進展", ms.war_card),
             "rotation_head": part("板塊輪動標題", ms.rotation_head, session), "breadth_head": part("市寬標題", ms.breadth_head),
@@ -150,7 +151,7 @@ def shell(view=None):
         return html
     return (html.replace("AI 追蹤</button>", 'AI 追蹤</button>\n  <button type="button" data-view="val" aria-pressed="false">估值</button>', 1)
                 .replace('src="ai/"></iframe>', 'src="ai/"></iframe>\n  <iframe id="val" class="off" title="估值" src="val/"></iframe>', 1)
-                .replace("const VIEWS = ['inst', 'macro', 'news', 'ai']", "const VIEWS = ['inst', 'macro', 'news', 'ai', 'val']", 1))
+                .replace("const VIEWS = ['inst', 'macro', 'news', 'ai', 'guide']", "const VIEWS = ['inst', 'macro', 'news', 'ai', 'val', 'guide']", 1))
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -201,7 +202,9 @@ class Handler(BaseHTTPRequestHandler):
             return self.reply(200, news_page(local=True).encode("utf-8"))   # local only: adds the watchlist coverage line
         if path in ("/ai/", "/ai/index.html"):
             return self.reply(200, ai_page().encode("utf-8"))
-        if path in ("/inst", "/macro", "/news", "/ai", "/val"):
+        if path in ("/guide/", "/guide/index.html"):
+            return self.reply(200, guide_page().encode("utf-8"))
+        if path in ("/inst", "/macro", "/news", "/ai", "/val", "/guide"):
             self.send_response(302)
             self.send_header("Location", path + "/")
             self.end_headers()

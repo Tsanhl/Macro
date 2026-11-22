@@ -1,13 +1,12 @@
 """Regroups the macro board's page (macro/index.html, served on 8766) as it is served. macro/ is never edited.
 
 Three pages:
-  宏觀  one scrolling page: 每日摘要, TGA, MOVE and Fed net liquidity, 美債 (auctions, 2-year and 10-year yields, the
-        10Y−2Y spread), the credit table, AI and semiconductor relative strength (all from macro_summary.py, charts drawn
-        by RB_JS below), then the dashboard's own relative rotation graph (sectors against the S&P 500 or
-        semiconductors, weekly or daily, with the trail selector) and two breadth charts (advance-decline line with
-        SPY, and the share of members above the 50-day average). Those two sections are styled as single cards like
-        the TGA card, each with its heading and a note from macro_summary; the 市寬與輪動摘要 card above them carries the
-        readings.
+  宏觀  one scrolling page (reorganised 2026-11-22, user): 現在要看 (data dates, the transmission chain, four
+        conclusions, the market state and 之後要看) and AI 拋售：半導體與避險資產 in section rbmacro; then the dashboard's
+        breadth section (advance-decline line with SPY and the McClellan oscillator; the 50-day share chart is hidden);
+        then section rbmacro2 with 信用總表, 美債, 股債波動 and 資金 (TGA and net liquidity); and, at the bottom, the
+        dashboard's relative rotation graph. The macro_summary cards are drawn by RB_JS below; the two dashboard sections
+        are styled as single cards like the others, each with its heading and one data line from macro_summary.
   美國經濟  growth, labour, inflation, consumers, housing, fiscal and financial conditions from FRED
         (server/us_economy_view.py, data from macro/us_economy.py): a table and small charts per section, data only.
   油價  the 油市總結 (macro_summary.oil_summary), then the dashboard's oil page with these changes: its curve card is
@@ -24,9 +23,9 @@ import re
 
 import us_economy_view
 
-GROUPS = {"overview": ["rbmacro", "rotation", "breadth"], "useco": ["useco"], "oil": ["oil"]}
+GROUPS = {"overview": ["rbmacro", "breadth", "rbmacro2", "rotation"], "useco": ["useco"], "oil": ["oil"]}
 DRAW = GROUPS
-HIDE = ["#update-status", "#oil-curve-card", "#oil-funds-card", "#oil-ovx-reading"]
+HIDE = ["#update-status", "#oil-curve-card", "#oil-funds-card", "#oil-ovx-reading", "#card-pctabove"]
 # #oil-ovx-reading says what the OVX lines already say
 HIDE_HAS = "#rotation .rb-seg:has(.rb-grp)"  # the universe switch: sectors only (own rule, so an old browser skips just this)
 
@@ -65,6 +64,22 @@ RB_JS = """  function drawRbMacro() {
         { name: '2 年期', color: c[1], values: rows.map((r) => ({ d: day(r.date), v: r.nominal2 })) }], { yFmt: d3.format('.1f'), tipFmt: pc });
       draw('ch-rb-curve', [{ name: '10 年減 2 年', color: c[0], values: rows.map((r) => ({ d: day(r.date), v: Math.round((r.nominal10 - r.nominal2) * 100) })) }],
         { yFmt: d3.format('d'), tipFmt: (v) => v.toFixed(0) + ' 基點', ref: 0 });
+    }
+    // 避險資產對 AI 拋售: 63-session correlation with QQQ over the last year, two panels of three (macro_summary.HAVEN_CHARTS)
+    const ca = status(['cross_asset']) === 'ok' ? dash.data('cross_asset').data[0] : null;
+    const hr = ca && ca.havens && ca.havens.roll;
+    if (ca && ca.havens && ca.havens.rows) {
+      const e = el('ch-rb-havenbar');
+      if (e) rbCorrBars(e, ca.havens.rows.filter((r) => r.corr != null), +(2 / Math.sqrt(ca.havens.window || 63)).toFixed(2));
+    }
+    if (hr && hr.dates) {
+      const nm = Object.fromEntries((ca.havens.rows || []).map((r) => [r.t, r.name]));
+      const sgn = (v) => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(2);
+      for (const [id, ts] of [['ch-rb-haven1', ['GLD', 'UUP', 'FXY']], ['ch-rb-haven2', ['SHY', 'IEF', 'XLP']]]) {
+        const series = ts.map((t, i) => ({ name: nm[t] || t, color: c[i], values: (hr[t] || []).map((v, k) => ({ d: day(hr.dates[k]), v })) }))
+          .filter((s) => s.values.length);
+        if (series.length) draw(id, series, { yFmt: (v) => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(1), tipFmt: sgn, ref: 0, yDomain: [-1, 1] });
+      }
     }
   }
 
@@ -135,6 +150,45 @@ RB_JS = """  function drawRbMacro() {
       .on('pointerleave', () => { rule.attr('opacity', 0); dot.attr('opacity', 0); hideTip(); });
   }
 
+  // 避險資產對 AI 拋售: each asset's current 63-session correlation with QQQ as a bar from zero (orange = with the Nasdaq,
+  // blue = against it), the ±band within which a reading cannot be told apart from zero shaded grey, the five-year
+  // median as a short vertical line, values in a right-hand column, and a tooltip per row.
+  function rbCorrBars(el, rows, band) {
+    el.replaceChildren();
+    if (!rows.length) return;
+    const c = colors(), rowH = 30, mt = 6, mb = 24;
+    const W = Math.max(el.clientWidth, 280), H = mt + mb + rowH * rows.length;
+    const svg = d3.select(el).append('svg').attr('class', 'rb-svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+    const sgn = (v) => (v > 0 ? '+' : v < 0 ? '−' : '') + Math.abs(v).toFixed(2);
+    const ml = Math.min(measure(svg, rows.map((r) => r.name)) + 12, W * 0.42), mr = 52;
+    const x = d3.scaleLinear([-1, 1], [ml, W - mr]), y = (i) => mt + i * rowH + rowH / 2, bot = mt + rowH * rows.length;
+    svg.append('rect').attr('x', x(-band)).attr('width', x(band) - x(-band)).attr('y', mt).attr('height', bot - mt).attr('fill', 'var(--grid)');
+    const ticks = [-1, -0.5, 0, 0.5, 1];
+    svg.append('g').selectAll('line').data(ticks).join('line').attr('class', (t) => (t === 0 ? 'rb-axis' : 'rb-gridline'))
+      .attr('x1', (t) => x(t)).attr('x2', (t) => x(t)).attr('y1', mt).attr('y2', bot);
+    svg.append('g').selectAll('text').data(ticks).join('text').attr('x', (t) => x(t)).attr('y', H - 6).attr('text-anchor', 'middle')
+      .text((t) => (t === 0 ? '0' : (t > 0 ? '+' : '−') + Math.abs(t).toFixed(1)));
+    svg.append('g').selectAll('text').data(rows).join('text').attr('x', ml - 8).attr('y', (r, i) => y(i)).attr('dy', '0.32em')
+      .attr('text-anchor', 'end').text((r) => r.name);
+    const bh = 12;
+    svg.append('g').selectAll('rect').data(rows).join('rect').attr('x', (r) => x(Math.min(0, r.corr)))
+      .attr('width', (r) => Math.max(1, Math.abs(x(r.corr) - x(0)))).attr('y', (r, i) => y(i) - bh / 2).attr('height', bh).attr('rx', 3)
+      .attr('fill', (r) => (r.corr >= 0 ? c[1] : c[0]));
+    svg.append('g').selectAll('line').data(rows.map((r, i) => ({ ...r, i })).filter((r) => r.corr_med5y != null)).join('line')
+      .attr('x1', (r) => x(r.corr_med5y)).attr('x2', (r) => x(r.corr_med5y)).attr('y1', (r) => y(r.i) - 10).attr('y2', (r) => y(r.i) + 10)
+      .attr('stroke', 'var(--color-fg)').attr('stroke-width', 2).attr('stroke-linecap', 'round');
+    svg.append('g').selectAll('text').data(rows).join('text').attr('x', W - 4).attr('y', (r, i) => y(i)).attr('dy', '0.32em')
+      .attr('text-anchor', 'end').attr('fill', 'var(--color-fg)').text((r) => sgn(r.corr));
+    const word = (v) => (v >= band ? '同向' : v <= -band ? '反向' : '沒有可靠關係');
+    svg.append('g').selectAll('rect').data(rows).join('rect').attr('x', 0).attr('width', W).attr('y', (r, i) => y(i) - rowH / 2).attr('height', rowH)
+      .attr('fill', 'transparent')
+      .on('pointermove', (event, r) => showTip(event, r.name, [
+        { color: r.corr >= 0 ? c[1] : c[0], text: `現在  ${sgn(r.corr)}（${word(r.corr)}）` },
+        { color: 'var(--cds-chart-muted)', text: `約六個月前  ${r.corr_6m == null ? '—' : sgn(r.corr_6m)}` },
+        { color: 'var(--color-fg)', text: `五年中位  ${r.corr_med5y == null ? '—' : sgn(r.corr_med5y)}` }]))
+      .on('pointerleave', () => hideTip());
+  }
+
   function drawRbOil() {
     const c = colors(), el = (id) => document.getElementById(id);
     const oil = status(['oil']) === 'ok' ? dash.data('oil').data[0] : null;
@@ -162,6 +216,10 @@ BREADTH_HEAD = "<!--RB-BREADTH-HEAD-->"
 
 # (exact source text, replacement). A missing text means the dashboard's page changed: see regroup().
 PATCHES = [
+    ('id="ch-ad" data-source="breadth" style="min-height: 13rem"></div>\n      </div>',
+     'id="ch-ad" data-source="breadth" style="min-height: 13rem"></div>\n      </div>\n      <div class="rb-card" id="card-mcc">\n        <h2 class="rb-h2" data-en="McClellan oscillator">麥克連振盪指標</h2>\n        <p class="rb-sub" data-en="19-day minus 39-day exponential average of (advancers − decliners) ÷ (advancers + decliners), × 1,000. Above 0: advancers have led lately; below 0: decliners.">每日（上升 − 下跌）÷（上升 + 下跌）的 19 日指數平均減 39 日指數平均，乘 1,000。0 以上＝近期上升股數佔優，0 以下＝下跌股數佔優。</p>\n        <div class="rb-chart" id="ch-rb-mcc" style="min-height: 13rem"></div>\n      </div>'),
+    ("lineChart(els[1], { series: adSeries, height: 240, yFmt: d3.format(','), tipFmt: d3.format(','), yRightFmt: fmt1 });",
+     "lineChart(els[1], { series: adSeries, height: 240, yFmt: d3.format(','), tipFmt: d3.format(','), yRightFmt: fmt1 });\n      const mel = document.getElementById('ch-rb-mcc');\n      if (mel) lineChart(mel, { series: [{ name: L('麥克連振盪指標', 'McClellan oscillator'), color: c[0], values: b.map((r) => ({ d: r.d, v: r.mcclellan })) }],\n        height: 240, ref: 0, yFmt: d3.format(','), tipFmt: (v) => v.toFixed(1) });"),
     ("const on = p.id === page;", "const on = (window.RB_GROUPS[page] || [page]).includes(p.id);"),
     ("if (on && !state.shown.has(page)) { state.shown.add(page); p.classList.add('rb-in'); }", ""),
     ("if (state.page === 'oil') drawOil();",
@@ -202,7 +260,7 @@ DARK = """color-scheme: dark;
   --surface: #1a1a19; --surface-2: #232321; --line: #383835; --grid: #2c2c2a; --ink: #f0efec; --ink-2: #c3c2b7; --ink-3: #8f8e86;
   --s1: #3987e5; --s2: #d95926; --cds-chart-axis: #4a4945; --cds-chart-muted: #6a6964;
   --color-warn: #e39a4a; --cds-shadow-popover: 0 6px 20px rgba(0, 0, 0, .5);
-  --series-3: #a58cf0; --series-4: #3cc2b0; --series-5: #ea6fa5; --series-6: #9bc24a; --series-7: #c9a24a; --series-8: #86a5d6;"""
+  --series-3: #9a80e6; --series-4: #3cc2b0; --series-5: #ea6fa5; --series-6: #9bc24a; --series-7: #c9a24a; --series-8: #86a5d6;"""
 STYLE = """
 :root { color-scheme: light;
   --surface: #fcfcfb; --surface-2: #f4f3f0; --line: #e2e1dc; --grid: #ecebe7; --ink: #0b0b0b; --ink-2: #52514e; --ink-3: #7c7b76;
@@ -249,6 +307,18 @@ body { background: var(--surface); color: var(--ink); font-size: 14px; line-heig
 #rb-wrap #rb-summary p { margin: 0 0 8px; max-width: 120ch; } #rb-wrap #rb-summary ul { margin: 0 0 8px; padding-left: 20px; }
 #rb-wrap .rb-card h3.rb-h2 { font-size: 14px; margin: 0 0 4px; }
 #rb-wrap .rb-credit td, #rb-wrap .rb-credit th { text-align: right; } #rb-wrap .rb-credit .rb-left { text-align: left; }
+#rb-wrap .rb-num td, #rb-wrap .rb-num th { text-align: right; } #rb-wrap .rb-num .rb-left { text-align: left; }
+#rb-wrap .rb-credit tr.rb-hot td { color: var(--bad); font-weight: 700; }
+#rb-wrap .rb-chain { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 6px 0 8px; }
+#rb-wrap .rb-node { border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; background: var(--surface); }
+#rb-wrap .rb-node.hot { border: 2px solid var(--bad); }
+#rb-wrap .rb-node .t { font-size: 12px; color: var(--ink-2); }
+#rb-wrap .rb-node .v { font-size: 15px; font-weight: 600; margin-top: 2px; }
+#rb-wrap .rb-node .st { font-size: 13px; color: var(--ink-2); margin-top: 2px; }
+#rb-wrap .rb-node .st.worse { color: var(--ink); font-weight: 700; }
+#rb-wrap .rb-node.hot .st.worse { color: var(--bad); }
+#rb-wrap .rb-node .s { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+#rb-wrap .rb-concl { margin: 4px 0; padding-left: 18px; } #rb-wrap .rb-concl li { margin: 6px 0; }
 #rb-wrap .rb-credit tr.rb-sep td { text-align: left; min-width: 0; color: var(--ink); }
 #rb-wrap .rb-credit td:last-child { white-space: normal; min-width: 14rem; color: var(--ink-2); }
 #rb-wrap .rb-bondt td, #rb-wrap .rb-bondt th { text-align: right; } #rb-wrap .rb-bondt .rb-left { text-align: left; }
@@ -288,7 +358,13 @@ def regroup(html, parts):
         html = html.replace(old, new, 1)
     html = re.sub(r'<nav class="rb-tabs".*?</nav>', NAV, html, count=1, flags=re.S)
     section = f'<section class="rb-page" id="rbmacro" role="tabpanel" aria-labelledby="tab-overview">\n{parts["macro"]}\n</section>\n  '
-    html = html.replace(ROTATION_OPEN, section + ROTATION_OPEN, 1)
+    # 市寬 before 板塊輪動 (user, 2026-11-22: the rotation graph goes to the bottom of the page)
+    m = re.search(r'<section class="rb-page" id="breadth".*?</section>\s*', html, flags=re.S)
+    breadth = ""
+    if m:
+        breadth, html = m.group(0), html.replace(m.group(0), "", 1)
+    section2 = f'<section class="rb-page" id="rbmacro2" role="tabpanel" aria-labelledby="tab-overview">\n{parts.get("macro2", "")}\n</section>\n  '
+    html = html.replace(ROTATION_OPEN, section + breadth + section2 + ROTATION_OPEN, 1)
     html = html.replace(ROTATION_HEAD, parts.get("rotation_head", ""), 1).replace(BREADTH_HEAD, parts.get("breadth_head", ""), 1)
     useco = f'<section class="rb-page" id="useco" role="tabpanel" aria-labelledby="tab-useco" hidden>\n{parts.get("useco", "")}\n</section>\n  '
     html = html.replace(OIL_OPEN, useco + OIL_OPEN + "\n" + parts["oil"], 1)

@@ -41,7 +41,7 @@ class ValPage(unittest.TestCase):
             shell = board.shell(f)
             self.assertIn('data-view="val"', shell)
             self.assertIn('src="val/"', shell)
-            self.assertIn("'ai', 'val']", shell)
+            self.assertIn("'ai', 'val', 'guide']", shell)
 
     def test_bad_file_still_renders_a_page(self):
         with tempfile.TemporaryDirectory() as d:

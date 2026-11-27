@@ -1,0 +1,752 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<script>(function(){var f=window.fetch;window.fetch=function(u,o){var s=typeof u==='string'?u:(u&&u.url)||'';
+if(/(^|\/)api\//.test(s))return Promise.reject(new Error('static snapshot'));return f.apply(this,arguments);};})();</script>
+<style>#all,#upd,#update-data{display:none!important}.static-note{font-size:13px;color:var(--ink-2,#52514e)}</style>
+<style id="type-scale">
+/* Three sizes only on every page this server sends (user, 2026-11-27, as on the biotech site): title 16px, subtitle 14px,
+   content 13px, chart labels included (smaller, user 2026-11-27); one font family. The large price figures take the title size. */
+html body, html body :not(code, pre, kbd, samp) { font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Helvetica Neue", sans-serif !important; }
+html body svg text { font-size: 13px !important; font-weight: 400 !important; }
+html body :is(h1, h2) { font-size: 16px !important; line-height: 1.3 !important; }
+html body :is(h1, h2, h3, h4, h5, h6, th, figcaption, .rb-h2) { font-weight: 600 !important; }   /* every title bold */
+html body :is(h3, h4, h5, h6) { font-size: 14px !important; line-height: 1.35 !important; }
+html body .rb-h2 { font-size: 14px !important; }
+html body .rb-page > h2.rb-h2, html body .rb-title, html body .price, html body .rb-tval, html body .big { font-size: 16px !important; }
+html body :not(svg, svg *, h1, h2, h3, h4, h5, h6, h1 *, h2 *, h3 *, h4 *, h5 *, h6 *,
+               .rb-h2, .rb-h2 *, .rb-title, .rb-title *, .price, .price *, .rb-tval, .rb-tval *, .big, .big *) { font-size: 13px !important; }
+html body :is(h1, h2, h3, h4, h5, h6, .rb-h2, .rb-title, .price, .rb-tval, .big) :is(.tag, .meta, .st, .chip, small) { font-size: 13px !important; }
+</style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>機構持倉板</title>
+<style>
+:root {
+  color-scheme: light;
+  --surface: #fcfcfb; --surface-2: #f4f3f0; --line: #e2e1dc; --grid: #ecebe7;
+  --ink: #0b0b0b; --ink-2: #52514e; --ink-3: #7c7b76;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
+  --pos: #2a78d6; --neg: #e34948; --mid: #f0efec;
+  --good: #0ca30c; --bad: #d03b3b;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --surface: #1a1a19; --surface-2: #232321; --line: #383835; --grid: #2c2c2a;
+    --ink: #f0efec; --ink-2: #c3c2b7; --ink-3: #8f8e86;
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+    --pos: #3987e5; --neg: #e66767; --mid: #383835;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface: #1a1a19; --surface-2: #232321; --line: #383835; --grid: #2c2c2a;
+  --ink: #f0efec; --ink-2: #c3c2b7; --ink-3: #8f8e86;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+  --pos: #3987e5; --neg: #e66767; --mid: #383835;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--surface); color: var(--ink);
+  font: 14px/1.55 -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Helvetica Neue", sans-serif; }
+.wrap { max-width: 1400px; margin: 0 auto; padding: 20px 16px 60px; }
+header { display: flex; flex-wrap: wrap; gap: 12px; align-items: baseline; justify-content: space-between; }
+h1 { font-size: 24px; font-weight: 500; margin: 0; }
+h2 { font-size: 18px; font-weight: 500; margin: 24px 0 4px; }
+h2.first { margin-top: 4px; }
+h3 { font-size: 15px; font-weight: 600; margin: 0 0 2px; }
+h4 { font-size: 13px; font-weight: 600; margin: 12px 0 4px; color: var(--ink-2); }
+.meta { color: var(--ink-2); font-size: 13px; }
+.warn { color: var(--bad); font-size: 13px; margin-top: 4px; }
+.bad { color: var(--bad); }
+button { font: inherit; color: var(--ink); background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: 6px; padding: 5px 14px; cursor: pointer; }
+button[aria-pressed="true"] { border-color: var(--ink-2); font-weight: 600; }
+button:focus-visible { outline: 2px solid var(--s1); outline-offset: 1px; }
+button:disabled { cursor: default; opacity: .6; }
+.status { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; justify-content: space-between; margin: 12px 0 0;
+  padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); font-size: 13px; }
+.status #statusText { flex: 1 1 420px; min-width: 0; }
+.status.stale { border-color: var(--bad); box-shadow: inset 4px 0 0 var(--bad); }
+.status .warn { flex-basis: 100%; margin: 0; }
+nav { display: flex; gap: 6px; margin: 16px 0 14px; }
+.note { color: var(--ink-2); font-size: 13px; max-width: 120ch; margin: 2px 0 10px; }
+.key { list-style: none; margin: 0 0 6px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); }
+.key li { margin: 3px 0; }
+.key li.meaning { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+.tag { display: inline-block; font-size: 12px; font-weight: 400; color: var(--ink-3); margin-left: 8px; }
+.tag.old { color: var(--bad); font-weight: 600; }
+.oldsec { opacity: .6; }
+.empty { color: var(--ink-2); font-size: 13px; margin: 0; padding: 12px 14px; border: 1px dashed var(--line); border-radius: 8px; }
+.grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 14px; }
+@media (max-width: 950px) { .grid2 { grid-template-columns: 1fr; } }
+.card { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; min-width: 0; }
+.price { font-size: 22px; font-variant-numeric: tabular-nums; }
+table { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; font-size: 13px; }
+th, td { padding: 4px 6px; text-align: right; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { font-weight: 500; color: var(--ink-2); font-size: 12px; white-space: nowrap; }
+.l { text-align: left; } .nw { white-space: nowrap; }
+tr.now td { background: var(--surface-2); font-weight: 600; border-top: 1px solid var(--ink-3); border-bottom: 1px solid var(--ink-3); }
+tr.cta td:first-child, tr.cta td:nth-child(3) { font-weight: 600; }
+tr.sub td { color: var(--ink-3); font-size: 12px; padding-top: 8px; text-align: left; border-bottom: 1px solid var(--line); }
+.sbr { display: flex; gap: 6px; flex-wrap: wrap; margin: 6px 0 0; }
+.sbr button { font: inherit; font-size: 12px; padding: 3px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink-2); cursor: pointer; }
+.sbr button[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+.long { color: var(--pos); font-weight: 600; } .short { color: var(--neg); font-weight: 600; }
+.muted { color: var(--ink-3); } .small { font-size: 12px; }
+.linkbtn { background: none; border: 0; color: var(--s1); padding: 2px 0; font-size: 12px; }
+section[hidden] { display: none; }
+@media (max-width: 600px) { .nw, th { white-space: normal; } th, td { padding: 3px 4px; } table { font-size: 12px; } .card { padding: 10px; } }
+.sbtip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; line-height: 1.5; box-shadow: 0 2px 8px rgba(0,0,0,.12); z-index: 5; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>機構持倉板</h1>
+      <div class="meta" id="meta">載入中…</div>
+    </div>
+  </header>
+  <div class="status" id="status" role="status">
+    <div id="statusText">載入中…</div>
+    <div class="nw"><button id="upd" type="button">更新數據</button> <span class="meta" id="updmsg"></span></div>
+    <div class="warn" id="warns"></div>
+  </div>
+  <nav id="tabs">
+    <button type="button" data-tab="today" aria-pressed="true">今日</button>
+    <button type="button" data-tab="week" aria-pressed="false">本週</button>
+  </nav>
+
+  <p class="note">單位及日期：CFTC 是期貨合約淨倉（long 減 short，張），截至週二，每週一次；CTA 趨勢模型和波動率控制是本板按收市價計的模型估算，不是基金實際持倉。各表註明數據日期。</p>
+
+  <section id="today">
+    <ul class="key" id="todayKey" data-ds="lv,cta"></ul>
+    <div class="meta" id="liveMeta"></div>
+    <h2>納指 NQ、標普 ES、VIX、VIX1D：持倉及關鍵水平 <span data-tag="cftc,lv,cta,vc"></span></h2>
+    <p class="note">水平階梯由高至低排列，灰底是現價。只有 CTA 行是模型的機械水平（收市在此價之上或之下，模型方向就不同）；前日高低位、20 日高低位和均線只是價格參考，「未平倉最多」是期權持倉分佈，這些都沒有回測，不代表支持或阻力。CTA 和波動率控制都看收市價，盤中穿越不等於已觸發；翻轉價每日變動。</p>
+    <div class="grid2" id="ladders"></div>
+    <h2>今天這樣收市，機械性資金要做甚麼 <span data-tag="lv,vc"></span></h2>
+    <p class="note">單位：億美元；負數是賣出，正數是買入。這是模型估算，只宜看方向和大小。槓桿 ETF 集中在收市前交易；波動率控制基金通常分幾日執行。</p>
+    <div class="grid2" id="flows" data-ds="lv,vc"></div>
+    <div id="sbWrap" hidden><!-- shown once data/stockbond.json loads; on the local board and the public copy (user, 2026-11-27) -->
+      <h2>股票與美債的相關（兩年） <span class="tag" id="sbTag"></span></h2>
+      <p class="note">標普 500 每日回報，對 10 年期美債價格每日回報（由 FRED 10 年期孳息按平價債券換算）的滾動相關系數。負數：股票跌的日子債券傾向升，債券有對沖作用；正數：股債傾向同升同跌；接近零：沒有穩定關係。這是兩者走勢的關係，不是持倉，不代表市場 long 股票或 short 債券；持倉見「本週」的 CFTC 美債。</p>
+      <div class="grid2" id="sb"></div>
+    </div>
+  </section>
+
+  <section id="week" hidden>
+    <ul class="key" id="weekKey" data-ds="lv,cftc"></ul>
+    <h2>納指 NQ、標普 ES：持倉 <span data-tag="cftc,cta,vc"></span></h2>
+    <p class="note">CTA 信號由 −100（全 short）至 +100（全 long）。五日變化是模型在這五日加或減了多少：正數代表買入，負數代表賣出。距翻轉是收市要再變動多少模型才轉向；註明「持平即翻」的，下一交易日持平收市模型也會轉向。這是模型估算，不是基金實際訂單。</p>
+    <p class="note">波動率控制基金要把組合波動維持在目標（模型用 10%）：市場越波動，持倉越少；市場平靜，就慢慢買回。倉位 = 10% ÷ 近期實際波動（取一個月及三個月較高者），上限 150%。</p>
+    <div class="grid2" id="weekIdx"></div>
+    <h2>CFTC：其他市場四類交易者本週誰加、誰減 <span data-tag="cftc"></span></h2>
+    <p class="note" id="cftcNote"></p>
+    <div class="cards" id="cftcCards" data-ds="cftc"></div>
+    <h2>CTA 趨勢模型：其他市場五日買入及賣出最多 <span data-tag="cta"></span></h2>
+    <div class="grid2" id="ctaCards" data-ds="cta"></div>
+    <h2>波動率參考 <span data-tag="vol,lv"></span></h2>
+    <div id="volWeek" data-ds="vol,lv"></div>
+    <h2>未來三週財報 <span data-tag="lv"></span></h2>
+    <p class="note">日期由 Yahoo 列出，未逐一向公司核實。</p>
+    <div id="earn" data-ds="lv" style="max-width:420px"></div>
+  </section>
+</div>
+<script>
+const $ = s => document.querySelector(s);
+const fmt = (x, d = 0) => x == null ? '—' : Number(x).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+const sgn = (x, d = 0) => { if (x == null) return '—'; const v = +Number(x).toFixed(d) || 0; return (v > 0 ? '+' : '') + fmt(v, d); };
+const lvl = x => x == null ? '—' : Number(x).toLocaleString('en-US', { maximumFractionDigits: 2 });
+const est = x => x == null ? '—' : Number(x).toLocaleString('en-US', { maximumFractionDigits: x > 1000 ? 0 : 2 });  // modelled or converted levels: no false precision
+const amt = x => fmt(Math.abs(x), Math.abs(x) < 10 ? 1 : 0);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const posT = p => `<span class="${p === 'LONG' ? 'long' : 'short'}">${p === 'LONG' ? 'long' : 'short'}</span>`;
+const md = d => d ? d.slice(5) : '—';
+const NAME = { NQ: '納指 NQ', ES: '標普 ES' }, SHORTNAME = { NQ: '納指', ES: '標普' };
+const EMPTY_TXT = '未有數據。按頁頂「更新數據」建置（約一分鐘）；如頁面不是由 serve.py 開啟，請在 institutional 資料夾執行 python3 build.py。';
+const EMPTY = `<p class="empty">${EMPTY_TXT}</p>`;
+const D = {}; let L = null, ST = {}, showAll = {}, liveTimer = null;
+
+async function load() {
+  const get = n => fetch(`data/${n}.json?t=${Date.now()}`).then(r => r.ok ? r.json() : null).catch(() => null);
+  [D.meta, D.lv, D.cta, D.cftc, D.vc, D.vol, D.nd, D.sb] = await Promise.all(['meta', 'levels', 'cta', 'cftc', 'vc', 'vol', 'nondealer', 'stockbond'].map(get));
+  $('#meta').textContent = D.meta ? `建置：${D.meta.built}` : '未建置';
+  $('#warns').textContent = D.meta?.warnings?.length ? '建置提示：' + D.meta.warnings.join('；') : '';
+  renderAll(); loadLive();
+}
+const mk = k => D.cta?.markets?.find(m => m.key === k);
+const cftcRow = code => D.cftc?.rows?.find(r => r.code === code);
+const ndRow = code => (Array.isArray(D.nd) ? D.nd : []).find(x => x.code === code);
+
+// ---------------- data dates: which close the board holds, which it should hold ----------------
+function nyNow() {
+  const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', { timeZone: 'America/New_York', year: 'numeric', month: '2-digit',
+    day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date()).map(x => [x.type, x.value]));
+  return { d: new Date(Date.UTC(+p.year, +p.month - 1, +p.day)), min: +p.hour * 60 + +p.minute };
+}
+const iso = d => d.toISOString().slice(0, 10);
+const back = d => d.setUTCDate(d.getUTCDate() - 1);
+function clockClose() {  // latest weekday whose US close (16:15 New York, as build.py) has passed; US holidays not known
+  const { d, min } = nyNow(), weekend = () => d.getUTCDay() % 6 === 0;
+  if (weekend() || min < 16 * 60 + 15) do back(d); while (weekend());
+  return iso(d);
+}
+function clockCftc() {  // Tuesday of the latest report due: CFTC normally publishes on Friday at 15:30 New York
+  const { d, min } = nyNow();
+  if (!(d.getUTCDay() === 5 && min >= 15 * 60 + 30)) do back(d); while (d.getUTCDay() !== 5);
+  d.setUTCDate(d.getUTCDate() - 3);
+  return iso(d);
+}
+const PRICE_DS = { lv: () => D.lv?.markets?.ES?.date ?? D.lv?.markets?.NQ?.date, cta: () => mk('ES')?.date ?? mk('NQ')?.date,
+                   vc: () => D.vc?.date, vol: () => D.vol?.vvix?.date };
+const CFTC_DS = { cftc: () => cftcRow('13874A')?.date ?? D.cftc?.rows?.[0]?.date };
+function computeStatus() {
+  const b = L?.board, have = PRICE_DS.lv() ?? PRICE_DS.cta(), cf = CFTC_DS.cftc();
+  const want = b?.last_close ?? clockClose(), cftcWant = clockCftc();
+  // the report due for cftcWant is out on the Friday after, 15:30 New York (taken as 20:30 UTC); a build after that
+  // which still has an older report means CFTC has not published yet (holiday weeks move it to the next working day)
+  const built = Date.parse((D.meta?.built || '').replace(' ', 'T').replace(' UTC', 'Z'));
+  const release = Date.parse(`${cftcWant}T20:30Z`) + 3 * 864e5, behind = !!cf && cf < cftcWant;
+  ST = { have, want, how: b ? 'quote' : 'clock', stale: !!have && have < want, cf, cftcWant,
+         cftcOld: behind && !(built >= release), cftcLate: behind && built >= release };
+}
+function dsState(k) {
+  const price = k in PRICE_DS, d = (price ? PRICE_DS : CFTC_DS)[k]?.();
+  if (!d) return { none: true, old: true, price };
+  return { d, price, old: price ? d < ST.want : ST.cftcOld };
+}
+function tag(keys) {
+  const s = keys.split(',').map(dsState);
+  if (s.some(x => x.none)) return '<span class="tag old">未載入</span>';
+  const out = [], p = s.filter(x => x.price), c = s.find(x => !x.price);
+  if (p.length) { const d = p.map(x => x.d).sort()[0], old = p.some(x => x.old);
+    out.push(`<span class="tag${old ? ' old' : ''}">${old ? `過時：按 ${md(d)} 收市，缺 ${md(ST.want)} 收市` : `按 ${md(d)} 收市`}</span>`); }
+  if (c) out.push(`<span class="tag${c.old ? ' old' : ''}">${c.old ? '過時：' : ''}CFTC ${md(c.d)}（週二）持倉</span>`);
+  return out.join('');
+}
+function renderStatus() {
+  const box = $('#status'), lines = [];
+  const any = ST.have || ST.cf;
+  if (!any) lines.push(`<b class="bad">${EMPTY_TXT}</b>`);
+  else {
+    if (!ST.have) lines.push('<b class="bad">價格及模型數據未載入。</b>按「更新數據」建置。');
+    else if (ST.stale) lines.push(`<b class="bad">數據是 ${ST.have} 收市，缺 ${ST.want} 收市${ST.how === 'clock' ? '（按工作日推算，未計美國假期）' : ''}。</b>標「過時」的部分（水平、翻轉價、資金估算）按 ${ST.have} 收市計算，不包括之後的走勢，也不適用於下一個交易日；盤中價暫不套用。請按「更新數據」（約一分鐘）。`);
+    else lines.push(`數據是 ${ST.have} 收市，已是最新。`);
+    if (!ST.cf) lines.push('<b class="bad">CFTC 數據未載入。</b>');
+    else if (ST.cftcOld) lines.push(`<b class="bad">CFTC 是 ${ST.cf}（週二）持倉；按正常發佈時間（週五美東 15:30）應已有 ${ST.cftcWant} 的報告。</b>按「更新數據」取得。`);
+    else if (ST.cftcLate) lines.push(`CFTC 是 ${ST.cf}（週二）持倉：上次建置時 CFTC 仍未發佈 ${ST.cftcWant} 的報告（假期週會延至下一個工作日），發佈後再按「更新數據」。`);
+    else lines.push(`CFTC 是 ${ST.cf}（週二）持倉，是最新一份報告。`);
+  }
+  $('#statusText').innerHTML = lines.join(' ');
+  box.classList.toggle('stale', !any || !ST.have || ST.stale || !ST.cf || ST.cftcOld);
+}
+function markSections() {
+  document.querySelectorAll('[data-tag]').forEach(el => { el.innerHTML = tag(el.dataset.tag); });
+  document.querySelectorAll('[data-ds]').forEach(el => el.classList.toggle('oldsec',
+    el.dataset.ds.split(',').some(k => { const s = dsState(k); return s.old && !s.none; })));
+}
+function safe(sel, fn) {
+  try { fn(); } catch (e) { console.error(e); const el = $(sel); if (el) el.innerHTML = '<p class="empty">此部分未能顯示：數據不完整。按頁頂「更新數據」重建。</p>'; }
+}
+const FAIL = '<p class="empty">此部分未能顯示：數據不完整。按頁頂「更新數據」重建。</p>';
+const part = fn => { try { return fn(); } catch (e) { console.error(e); return FAIL; } };
+function renderAll() { computeStatus(); renderStatus(); renderToday(); renderWeek(); markSections(); }
+
+// ---------------- live prices: used only while the board holds the latest close ----------------
+const useLive = () => !!L && !ST.stale;
+const liveOf = k => {
+  if (!useLive()) return null;
+  const x = L.cta?.find(c => c.key === k);
+  if (!x || x.stale) return null;
+  if (x.session) return x.session > ST.have ? x : null;  // a later session than the board's close
+  return Math.abs(x.chg) >= 0.005 ? x : null;  // older server: no move against the board's close means no new session
+};
+const liveVix = () => useLive() && L.vix ? L.vix : null;
+const nowPx = k => k === 'VIX' ? (liveVix()?.live ?? D.lv.markets.VIX.close) : (liveOf(k)?.live ?? D.lv.markets[k].close);
+function interp(c, x) {
+  if (!c?.length) return null;
+  if (x <= c[0].move) return c[0].flow;
+  if (x >= c.at(-1).move) return c.at(-1).flow;
+  const i = c.findIndex(p => p.move >= x), a = c[i - 1], b = c[i];
+  return a.flow + (b.flow - a.flow) * (x - a.move) / (b.move - a.move);
+}
+
+// where the trend model stands against the price the page uses, and what close changes it
+function flipInfo(k) {
+  const m = mk(k), px = nowPx(k), f = m.flip_level, long = m.pos === 'LONG';
+  const o = { m, px, f, long, other: long ? 'short' : 'long', live: !!liveOf(k) };
+  if (f == null) return { ...o, locked: true };
+  return { ...o, crossed: long ? px < f : px > f, d: (f / px - 1) * 100 };
+}
+function flipText(k) {
+  const F = flipInfo(k);
+  if (F.locked) return '單日變動難以令模型翻轉（翻轉點超過 25 個日標準差）';
+  const cmp = F.long ? '低於' : '高於';
+  if (F.crossed && !F.live) return `收市${cmp} <b>${est(F.f)}</b>（${sgn(F.d, 1)}%）就翻 ${F.other}，即下一交易日持平收市模型也會翻 ${F.other}`;
+  if (F.crossed) return `現價已${cmp}翻轉價 <b>${est(F.f)}</b>（${sgn(F.d, 1)}%）：按現價收市，模型會翻 ${F.other}`;
+  return `收市${F.long ? '跌穿' : '升穿'} <b>${est(F.f)}</b>（${sgn(F.d, 1)}%）才翻 ${F.other}`;
+}
+function flipBrief(k) {  // the one place the trend model's flip price is written out (the ladder lists it as a level)
+  const F = flipInfo(k);
+  if (F.locked) return '單日難以翻轉（翻轉點超過 25 個日標準差）';
+  if (F.crossed) return `${F.live ? '按現價收市' : '持平收市'}即翻 ${F.other}（翻轉價 <b>${est(F.f)}</b>，${sgn(F.d, 1)}%）`;
+  return `收市${F.long ? '低於' : '高於'} <b>${est(F.f)}</b>（${sgn(F.d, 1)}%）翻 ${F.other}`;
+}
+
+// ---------------- NQ and ES positioning, shared by both pages ----------------
+const CODE = { NQ: '209742', ES: '13874A' }, GRP = ['am', 'lev', 'dealer', 'other'];
+const net = n => n == null ? '—' : n >= 0 ? `淨 <span class="long">long</span> ${fmt(n)}` : `淨 <span class="short">short</span> ${fmt(-n)}`;
+const NA = '<span class="muted">未載入</span>';
+const vcOf = k => k === 'NQ' ? D.vc?.nq : D.vc;
+const vc5 = k => k === 'NQ' ? D.vc?.nq?.lev_5d : (D.vc ? D.vc.expo_5d / D.vc.aum : null);
+function posToday(k) {  // CFTC groups, CTA and vol control for one index: the top of its card on 今日
+  const r = cftcRow(CODE[k]), m = mk(k), V = vcOf(k), lev5 = vc5(k), M = D.lv?.markets?.[k];
+  const tr = x => `<tr><td class="l nw">${x[0]}</td><td class="l nw">${x[1]}</td><td class="l">${x[2]}</td></tr>`;
+  const cf = r ? GRP.map(g => r.cats[g]).filter(Boolean).map(c => tr([c.label, net(c.net), act(c.net, c.chg)])).join('') : tr(['CFTC', NA, '']);
+  let hz = '';
+  if (m && M?.horizons?.length) { const px = nowPx(k); hz = `<br><span class="muted small">${M.horizons.map(h => `${h.k} 日 ${px > h.level ? 'long' : 'short'}`).join('、')}</span>`; }
+  const cta = tr(['CTA 趨勢模型', m ? `${posT(m.pos)}（信號 ${sgn(m.sig)}）${hz}` : NA, m ? `五日 ${sgn(m.sig_5d)}${M ? `；${flipBrief(k)}` : ''}` : '']);
+  const vc = tr(['波動率控制模型', V?.lev == null ? NA : `倉位 ${fmt(V.lev * 100)}%`, lev5 == null ? '' : `五日 ${sgn(lev5 * 100)} 個百分點`]);
+  return `<table><thead><tr><th class="l">類別</th><th class="l">現時</th><th class="l">變化</th></tr></thead>
+    <tbody data-ds="cftc"><tr class="sub"><td colspan="3">CFTC：${r?.date ?? '—'}（週二）持倉；變化是一週</td></tr>${cf}</tbody>
+    <tbody data-ds="cta,vc"><tr class="sub"><td colspan="3">模型：按 ${m?.date ?? D.vc?.date ?? '—'} 收市；變化是五日</td></tr>${cta}${vc}</tbody></table>`;
+}
+function vcRows(V, d5, flat) {
+  return `<tr><td class="l">模型倉位</td><td class="nw">${fmt(V.lev * 100, 0)}%</td><td class="l muted">100% 代表持股等於資金；上限 150%</td></tr>
+    <tr><td class="l">五日變化</td><td class="nw">${sgn(d5 * 100, 0)} 個百分點</td><td class="l muted">負數代表這幾日已減倉</td></tr>
+    <tr><td class="l">三年百分位</td><td class="nw">第 ${fmt(V.pct3y)}</td><td class="l muted">越低代表倉位越輕</td></tr>
+    <tr><td class="l">實際波動</td><td class="nw">${fmt(V.rv21, 1)}% / ${fmt(V.rv63, 1)}%</td><td class="l muted">一個月 / 三個月，較高者決定倉位</td></tr>
+    <tr><td class="l">若持平五日</td><td class="nw">${flat}</td><td class="l muted">市場平靜時模型會買回多少</td></tr>`;
+}
+function posWeek(k) {  // the same three groups for 本週, with the fuller CFTC, CTA and vol-control detail
+  const r = cftcRow(CODE[k]), m = mk(k), V = vcOf(k), nd = ndRow(CODE[k]);
+  const q = x => x == null ? '—' : `${x >= 0 ? '買入' : '賣出'} ${amt(x * 10)} 億`;
+  const cf = !r ? `<p class="empty">CFTC ${NA}</p>` : `<div data-ds="cftc"><table><tr><th class="l">類別</th><th class="l">本週</th><th>淨倉</th><th class="l">淨倉相對一年平均</th></tr>
+    ${GRP.filter(g => r.cats[g]).map(g => { const c = r.cats[g]; return `<tr><td class="l nw">${c.label}</td><td class="l">${act(c.net, c.chg)}</td><td class="nw">${net(c.net)}</td><td class="l">${state(c.z)}</td></tr>`; }).join('')}</table>
+    ${nd ? `<p class="note small" style="margin:4px 0 0">非交易商名義淨倉 ${sgn(nd.usd * 10)} 億美元（${nd.date}；2020 年起第 ${fmt(nd.pct_all)} 百分位）。</p>` : ''}</div>`;
+  const dist = m && (m.flip_move == null ? '—' : sgn(m.flip_move, 1) + '%' + (m.flat ? '（持平即翻）' : ''));
+  const cta = !m ? `<p class="empty">CTA ${NA}</p>` : `<table data-ds="cta"><tr><th class="l">倉位</th><th>信號</th><th>五日變化</th><th>距翻轉</th></tr>
+    <tr><td class="l">${posT(m.pos)}</td><td>${sgn(m.sig)}</td><td>${sgn(m.sig_5d)}</td><td class="nw">${dist}</td></tr></table>`;
+  const vc = !V ? `<p class="empty">波動率控制模型${NA}</p>` : `<div data-ds="vc"><table>${vcRows(V, vc5(k), k === 'NQ' ? q(V.quiet?.['5']) + '／100 億' : q(V.quiet?.['5']))}</table>
+    <p class="note small" style="margin-top:6px">${k === 'NQ' ? '同一條規則用於納指。納指類資金沒有公開規模，金額只按每 100 億美元資金計，大部分波動率控制資金其實跟標普，所以這主要反映納指的波動壓力。'
+      : `金額假設此類策略資金 ${fmt(V.aum * 10)} 億美元；只要假設改變，金額就會改變。`}</p></div>`;
+  return `<div class="card"><h3>${NAME[k]}</h3>
+    <h4>CFTC：${r?.date ?? '—'}（週二）持倉，變化是一週</h4>${cf}
+    <h4>CTA 趨勢模型：按 ${m?.date ?? '—'} 收市</h4>${cta}
+    <h4>波動率控制模型：按 ${D.vc?.date ?? '—'} 收市</h4>${vc}</div>`;
+}
+
+// ---------------- today ----------------
+// R32 (Backtests/results/32_reference_levels.txt): the only reference level that held in both halves of 1999–2026
+const R32 = v => v.last > 30 ? `<p class="note small" style="margin-top:6px">歷史參考（R32）：1999 至 2026 年，VIX 收市高於 30 之後 3 個月，標普中位數回報 +7.7%（所有日子 +3.5%），前後兩半時期都較高；但 1999 至 2012 年期間途中回落較深。這是歷史比率，不是預測。</p>` : '';
+// the S&P's next session: VIX1D ÷ √252 only (R33: lower error than VIX ÷ √252), in % and in points of three prices
+const R33 = '回測（R33，2023 年 4 月至 2026 年 11 月，894 個交易日）：VIX1D 對下一交易日標普波幅的誤差較 VIX 低，所以下一交易日的數字只用 VIX1D；VIX1D 通常偏高約一成，週末及假期後偏高更多。';
+function nextDay() {
+  const d1 = D.lv?.strip?.['^VIX1D'], C = D.lv?.cash || {}, es = D.lv?.markets?.ES;
+  if (!d1) return { text: 'VIX1D 缺失，未能給出標普下一交易日的一個標準差。' };
+  const pct = d1.last / Math.sqrt(252), lab = d => d && d !== d1.date ? `，${md(d)} 收市` : '';
+  const one = (name, px, d, dollar) => {
+    const p = px * pct / 100, f = x => (dollar ? '$' : '') + fmt(x, dollar ? 2 : 0), pf = dollar ? '$' + fmt(p, 1) : fmt(p) + ' 點';
+    return { pts: p, s: `${name} ${f(px)}${lab(d)} ± ${pf}（${f(px - p)} 至 ${f(px + p)}）` };
+  };
+  const g = C['^GSPC'], y = C.SPY, parts = [], miss = [];
+  const spx = g ? one('標普', g.close, g.date) : null;
+  if (spx) parts.push(spx.s); else miss.push('標普 500 指數收市');
+  if (es?.close != null) parts.push(one('ES', es.close, es.date).s); else miss.push('ES 期貨收市');
+  if (y) parts.push(one('SPY', y.close, y.date, true).s); else miss.push('SPY 收市');
+  const text = `下一交易日一個標準差約 ±${fmt(pct, 2)}%（VIX1D ${fmt(d1.last, 2)} ÷ √252，按 ${md(d1.date)} 收市）`
+    + (parts.length ? `：${parts.join('；')}。` : '。') + (miss.length ? `缺${miss.join('、')}。` : '');
+  return { text, pct, spx, d1 };
+}
+function todayMeaning() {
+  const n = mk('NQ'), e = mk('ES'), M = D.lv?.markets;
+  if (!n || !e || !M?.NQ || !M?.ES) return '<b>意思：</b>未有 CTA 模型或水平數據，未能描述。按頁頂「更新數據」建置。';
+  const out = [], side = p => p === 'LONG' ? '持 long（買方）' : '持 short（賣方）';
+  if (ST.stale) out.push(`以下按 ${ST.have} 收市計算，未包括 ${ST.want} 收市，翻轉價可能已改變。`);
+  out.push(n.pos === e.pos ? `趨勢模型在納指和標普都${side(n.pos)}。` : `趨勢模型在納指${side(n.pos)}、在標普${side(e.pos)}，兩個市場方向不同。`);
+  out.push(['NQ', 'ES'].map(k => {
+    const F = flipInfo(k), nm = SHORTNAME[k], turn = F.long ? '由買方轉為賣方' : '由賣方轉為買方';
+    if (F.locked) return `${nm}模型單日難以翻轉`;
+    if (F.crossed && !F.live) return `${nm}即使持平收市，模型也會${turn}（翻轉價 ${est(F.f)}）`;
+    if (F.crossed) return `按現價收市，${nm}模型會${turn}（翻轉價 ${est(F.f)}）`;
+    return `${nm}要收市${F.long ? '低於' : '高於'} ${est(F.f)}（${sgn(F.d, 1)}%）模型才${turn}`;
+  }).join('；') + '。');
+  const E = D.lv.etf, V = D.vc, es = liveOf('ES'), nq = liveOf('NQ');
+  if (!ST.stale && E && V) {
+    const bs = x => x >= 0 ? '買入' : '賣出';
+    if (es || nq) {
+      const em = es?.chg ?? 0, nm = nq?.chg ?? 0;
+      const etf = ((E.spx?.per1 ?? 0) * em + (E.nq?.per1 ?? 0) * nm + (E.chips?.per1 ?? 0) * nm * (D.lv.sox_beta ?? 1)) * 10;
+      const vc = interp(V.curve, em);
+      out.push(`按現價收市（標普 ${sgn(em, 2)}%、納指 ${sgn(nm, 2)}%），槓桿 ETF 估計在收市前${bs(etf)}約 ${amt(etf)} 億美元${vc == null ? '' : `，標普波動率控制模型估計${bs(vc)}約 ${amt(vc * 10)} 億美元`}（模型估算，金額取決於資金假設）。`);
+    } else if (V.quiet?.['1'] != null) {
+      out.push(`若下一交易日持平收市，槓桿 ETF 不需調整，標普波動率控制模型估計${bs(V.quiet['1'])}約 ${amt(V.quiet['1'] * 10)} 億美元（模型估算）。`);
+    }
+  }
+  out.push(nextDay().text);
+  return '<b>意思：</b>' + out.join('');
+}
+function ctaFlipRows(k) {  // every trend-model flip price (each horizon and the overall model), so the ladder always shows them
+  const M = D.lv?.markets?.[k], m = mk(k), out = [];
+  (M?.horizons || []).filter(h => h.level != null).forEach(h => out.push({ kind: 'cta', price: h.level, label: `CTA ${h.k} 日翻轉價`,
+    up: `收市升穿：${h.k} 日訊號轉 long`, down: `收市跌穿：${h.k} 日訊號轉 short` }));
+  if (m?.flip_level != null) out.push({ kind: 'cta', price: m.flip_level, label: 'CTA 綜合翻轉價',
+    up: '收市高於此價：模型為 long（買方）', down: '收市低於此價：模型為 short（賣方）' });
+  return out;
+}
+function posSummary(k) {  // one sentence above 持倉及模型: who added or cut, where the trend model stands and turns, vol control
+  const r = cftcRow(CODE[k]), m = mk(k), V = vcOf(k), lev5 = vc5(k), M = D.lv?.markets?.[k], out = [];
+  const who = { am: '資產管理', lev: '槓桿基金' };
+  if (r) { const g = ['am', 'lev'].filter(x => r.cats[x]); if (g.length) out.push(g.map(x => { const a = act(r.cats[x].net, r.cats[x].chg); return `${who[x]}${/^[a-z]/i.test(a) ? ' ' : ''}${a}${a.startsWith('轉') ? '' : `（現${r.cats[x].net >= 0 ? '淨 long' : '淨 short'}）`}`; }).join('，')); }
+  if (m) {
+    const px = nowPx(k), H = (M?.horizons || []).filter(h => h.level != null);
+    let t = `CTA 模型持 ${m.pos === 'LONG' ? 'long' : 'short'}` + (H.length ? `（${H.map(h => `${h.k} 日 ${px > h.level ? 'long' : 'short'}`).join('、')}）` : '');
+    if (M) t += `，${flipBrief(k)}`;
+    const near = H.map(h => ({ ...h, d: (h.level / px - 1) * 100 })).sort((a, b) => Math.abs(a.d) - Math.abs(b.d))[0];
+    if (near) t += `；最近的是 ${near.k} 日翻轉價 <b>${est(near.level)}</b>（${sgn(near.d, 1)}%），收市${px > near.level ? '跌穿就轉 short' : '升穿就轉 long'}`;
+    out.push(t);
+  }
+  if (V?.lev != null) out.push(`波動率控制倉位 ${fmt(V.lev * 100)}%${lev5 == null ? '' : `，五日 ${sgn(lev5 * 100)} 個百分點`}（波動越大倉位越輕，市場平靜時會慢慢買回）`);
+  return out.length ? `<p class="small" style="margin:4px 0 6px"><b>總結：</b>${out.join('；')}。</p>` : '';
+}
+function ladder(k, top = '') {  // 1. 水平 (every CTA flip always shown, option ranges in one line), then 2. 持倉及模型 when top is given
+  const M = D.lv.markets[k], px = nowPx(k), live = k === 'VIX' ? liveVix() : liveOf(k);
+  const rg = (M.ranges || []).filter(r => r.pct != null);
+  const lim = rg.length ? Math.max(...rg.map(r => Math.abs(r.pct))) * 1.3 : 100;
+  const must = x => x.kind === 'cta';   // flip prices are always shown, however far
+  const base = M.levels || [], all = [...base, ...(k === 'VIX' ? [] : ctaFlipRows(k)).filter(f => !base.some(x => x.kind === 'cta' && x.label === f.label))];
+  const keep = showAll[k] ? all : all.filter(x => Math.abs(x.price / px - 1) * 100 <= lim || must(x));
+  const rows = [...keep.map(x => ({ ...x })), { now: true, price: px }].sort((a, b) => b.price - a.price);
+  const nowLabel = live ? '現價（延遲）' : `${md(M.date)} 收市${ST.stale ? '（過時）' : ''}`;
+  const body = rows.map(x => {
+    if (x.now) return `<tr class="now"><td class="l nw">${lvl(px)}</td><td></td><td class="l" colspan="2">${nowLabel}</td></tr>`;
+    const up = x.price > px, txt = up ? x.up : x.down, d = (x.price / px - 1) * 100;
+    return `<tr class="${x.kind === 'cta' && x.label.includes('綜合') ? 'cta' : ''}"><td class="l nw">${x.kind === 'option' ? '≈' : ''}${x.kind === 'price' ? lvl(x.price) : est(x.price)}</td><td>${sgn(d, 1)}%</td><td class="l">${esc(x.label)}</td><td class="l muted">${esc(!txt || txt === '—' ? '' : txt)}</td></tr>`;
+  }).join('');
+  const chg = live ? (k === 'VIX' ? sgn(live.chg, 2) : sgn(live.chg, 2) + '%') : (k === 'VIX' ? sgn(M.chg, 2) : sgn(M.chg, 2) + '%');
+  const noD1 = k === 'ES' && !rg.some(r => r.src === 'VIX1D');
+  const ranges = rg.length ? `<p class="note small" style="margin:6px 0 0"><b>期權定價範圍</b>（按 ${md(M.date)} 收市；約三分之二的日子在範圍內，不是上下限）：`
+    + rg.map(r => `${r.label} ${r.range ? `${fmt(r.range[0])} 至 ${fmt(r.range[1])}` : '—'}（±${fmt(r.pct, 2)}%）`).join('；')
+    + `。${noD1 ? 'VIX1D 缺失，未能給出下一交易日的範圍。' : ''}</p>` : '';
+  const hidden = all.length - keep.length;
+  return `<div class="card" data-ds="${k === 'VIX' ? 'lv' : 'lv,cta'}"><h3>${esc(M.name)}</h3><div class="price">${lvl(px)} <span class="meta">${chg}${live ? `，${live.time}（英國時間）` : `，${M.date} 收市`}</span></div>
+    <h4>${top ? '1. ' : ''}水平</h4><table><tr><th class="l">水平</th><th>距離</th><th class="l">是甚麼</th><th class="l">收市穿越的意思</th></tr>${body}</table>
+    ${hidden > 0 || showAll[k] ? `<button class="linkbtn" data-all="${k}">${showAll[k] ? '只看較近的水平' : `顯示全部（另有 ${hidden} 個較遠水平）`}</button>` : ''}
+    ${ranges}
+    ${top ? `<h4>2. 持倉及模型</h4>${part(() => posSummary(k))}${top}` : ''}</div>`;
+}
+function curveAt(c, m) { const x = (c || []).find(p => Math.abs(p.move - m) < 0.01); return x ? x.flow : null; }
+function flows() {
+  const V = D.vc, N = V.nq, E = D.lv.etf, beta = D.lv.sox_beta, moves = [-5, -3, -2, -1, 1, 2, 3];
+  const cell = x => x == null ? '—' : `<span class="${x < 0 ? 'short' : 'long'}">${sgn(x, Math.abs(x) < 10 ? 1 : 0)}</span>`;
+  const nq = moves.map(m => { const a = E.nq.per1 * m * 10, b = E.chips.per1 * m * beta * 10, v = curveAt(N?.curve, m);
+    return `<tr><td class="l">${sgn(m)}%</td><td>${cell(a)}</td><td>${cell(b)}</td><td>${cell(a + b)}</td><td>${cell(v == null ? null : v * 10)}</td></tr>`; }).join('');
+  const es = moves.map(m => { const a = E.spx.per1 * m * 10, v = curveAt(V.curve, m), vv = v == null ? null : v * 10;
+    return `<tr><td class="l">${sgn(m)}%</td><td>${cell(a)}</td><td>${cell(vv)}</td><td>${cell(vv == null ? a : a + vv)}</td></tr>`; }).join('');
+  const upSell = curveAt(V.curve, 3) < 0, q1 = V.quiet?.['1'];
+  $('#flows').innerHTML = `<div class="card"><h3>納指 NQ</h3><table><tr><th class="l">納指單日</th><th>納指槓桿 ETF</th><th>半導體槓桿 ETF</th><th>ETF 合計</th><th>波動率控制（每 100 億資金）</th></tr>${nq}</table>
+    <p class="note small" style="margin-top:6px">半導體按近 60 日 β ${fmt(beta, 2)} 倍納指計。納指類波動率控制沒有公開的資金規模，所以只列每 100 億美元資金的金額，不是全市場總額，不計入合計。</p></div>
+    <div class="card"><h3>標普 ES</h3><table><tr><th class="l">標普單日</th><th>標普槓桿 ETF</th><th>波動率控制（假設資金 ${fmt(V.aum * 10)} 億）</th><th>合計</th></tr>${es}</table>
+    <p class="note small" style="margin-top:6px">${upSell ? '大升日也可能是賣出：波動率控制看波動大小，不看方向。模型用標準差計波動，近期平均回報為負時，升日的賣出估算會偏大，只宜看大概幅度。' : ''}${q1 == null ? '' : `若下一交易日持平，波動率控制約${q1 >= 0 ? '買入' : '賣出'} ${amt(q1 * 10)} 億。`}</p></div>`;
+}
+function vixArea() {
+  const S = D.lv.strip || {}, gap = D.lv.vxn_vix, w = D.vol?.vvix, b = D.vol?.beta?.recent?.at(-1);
+  const v = S['^VIX'], v9 = S['^VIX9D'], v3 = S['^VIX3M'], rows = [];
+  const cmp = (a, c) => a < c ? '低於' : a > c ? '高於' : '等於';
+  if (v) rows.push(['VIX', `${fmt(v.last, 2)}（${sgn(v.last - v.prev, 2)}，${md(v.date)} 收市）`, `${v.pct1y != null ? `一年第 ${fmt(v.pct1y)} 百分位。` : ''}標普未來 30 日的隱含波幅（年化）。`]);
+  if (v && v9) rows.push(['VIX9D 對 VIX', `${fmt(v9.last, 2)} 對 ${fmt(v.last, 2)}`, `未來 9 日的隱含波幅${cmp(v9.last, v.last)} 30 日。`]);
+  if (v && v3) { const ratio = v.last / v3.last;
+    rows.push(['VIX 對 VIX3M', `${fmt(ratio, 2)} 倍`, ratio > 1 ? '高於 1 是倒掛：30 日隱含波幅高於三個月。' : '低於 1 是正常的期限結構：30 日隱含波幅低於三個月。']); }
+  if (gap?.last != null) rows.push(['VXN − VIX', `${fmt(gap.last, 2)} 點`, `一年中位數 ${fmt(gap.median1y, 2)} 點，現時${cmp(gap.last, gap.median1y)}中位數 ${fmt(Math.abs(gap.last - gap.median1y), 2)} 點：納指期權相對標普期權${gap.last >= gap.median1y ? '比一年中位數貴' : '比一年中位數便宜'}。`]);
+  if (w) rows.push(['VVIX', `${fmt(w.vvix, 1)}（${md(w.date)}）`, `扣除 VIX 水平後，三年第 ${fmt(w.res_pct)} 百分位：越高代表 VIX 期權相對 VIX 水平越貴。`]);
+  if (b) rows.push(['VIX 對標普的反應', `${sgn(b.dvix, 2)} 點（${md(b.date)}）`, `當日標普 ${sgn(b.spx, 2)}%。按兩年關係，VIX 的變動偏離 ${sgn(b.res, 2)} 點（正數即升多了或跌少了），偏離幅度大過兩年內 ${fmt(b.pct)}% 的日子。`]);
+  return part(() => ladder('VIX')) + readings('VIX 讀數', rows, 'lv,vol', v ? R32(v) : '');
+}
+const readings = (title, rows, ds, extra = '') => `<div class="card" data-ds="${ds}"><h3>${title}</h3>${rows.length ? `<table><tr><th class="l">指標</th><th class="l">現在</th><th class="l">意思</th></tr>${rows.map(r => `<tr><td class="l nw">${r[0]}</td><td class="l nw">${r[1]}</td><td class="l">${r[2]}</td></tr>`).join('')}</table>` : EMPTY}${extra}</div>`;
+function vix1dArea() {  // the S&P's next-session implied volatility: level, next-day range, against VIX and VIX9D, realised
+  const S = D.lv.strip || {}, d1 = S['^VIX1D'], v = S['^VIX'], v9 = S['^VIX9D'], rv = D.lv.vix1d_rv, N = nextDay();
+  if (!d1) return `<div class="card" data-ds="lv"><h3>VIX1D</h3><p class="empty">${N.text}</p></div>`;
+  const cmp = (a, c) => a < c ? '低於' : a > c ? '高於' : '等於';
+  const lv = [{ price: d1.hi1y, label: '一年高位' }, { price: d1.med1y, label: '一年中位數' }, { price: d1.lo1y, label: '一年低位' },
+              { price: d1.prev, label: '前一收市' }].filter(x => x.price != null);
+  const body = [...lv, { now: true, price: d1.last }].sort((a, b) => b.price - a.price).map(x => x.now
+    ? `<tr class="now"><td class="l nw">${lvl(x.price)}</td><td></td><td class="l">${md(d1.date)} 收市</td></tr>`
+    : `<tr><td class="l nw">${lvl(x.price)}</td><td>${sgn(x.price - d1.last, 2)}</td><td class="l">${x.label}</td></tr>`).join('');
+  const level = `<div class="card" data-ds="lv"><h3>VIX1D</h3><div class="price">${lvl(d1.last)} <span class="meta">${sgn(d1.last - d1.prev, 2)}，${d1.date} 收市</span></div>
+    <h4>水平（一年：${d1.n1y} 個交易日）</h4><table><tr><th class="l">水平</th><th>距離（點）</th><th class="l">是甚麼</th></tr>${body}</table></div>`;
+  const rows = [['VIX1D', `${fmt(d1.last, 2)}（${sgn(d1.last - d1.prev, 2)}，${md(d1.date)} 收市）`, `${d1.pct1y != null ? `一年第 ${fmt(d1.pct1y)} 百分位。` : ''}標普下一個交易日的隱含波幅（年化），只計下一個交易日。`],
+    ['下一交易日一個標準差', `±${fmt(N.pct, 2)}%${N.spx ? `，±${fmt(N.spx.pts)} 點` : ''}`, `VIX1D ÷ √252。${N.spx ? `點數按 ${md(D.lv.cash['^GSPC'].date)} 標普 500 指數收市 ${fmt(D.lv.cash['^GSPC'].close, 2)} 計。` : '缺標普 500 指數收市，未能折算點數。'}假設常態分佈，約三分之二的交易日波幅在此之內，不是上下限。`]];
+  if (v) rows.push(['VIX1D 對 VIX', `${fmt(d1.last, 2)} 對 ${fmt(v.last, 2)}`, `VIX1D ${cmp(d1.last, v.last)} VIX：期權給下一交易日的波幅${cmp(d1.last, v.last)}未來 30 日的平均。`]);
+  if (v9) rows.push(['VIX1D 對 VIX9D', `${fmt(d1.last, 2)} 對 ${fmt(v9.last, 2)}`, `VIX1D ${cmp(d1.last, v9.last)} VIX9D：期權給下一交易日的波幅${cmp(d1.last, v9.last)}未來 9 日的平均。`]);
+  if (rv) rows.push(['實際對隱含波幅', `${fmt(rv.real, 2)}% 對 ${fmt(rv.imp, 2)}%（${md(rv.date)}）`, `${md(rv.date)} 標普收市對收市 ${sgn(rv.move, 2)}%，實際波幅${rv.real > rv.imp ? '大過' : rv.real < rv.imp ? '小於' : '等於'}前一晚（${md(rv.prev_date)}）VIX1D 所定價的一日波幅。`]);
+  return level + readings('VIX1D 讀數', rows, 'lv', `<p class="note small" style="margin-top:6px">${R33}</p>`);
+}
+function indexCard(k) {  // one block per index: price, 1. 水平 (ladder and option ranges), 2. 持倉及模型 (summary and table)
+  if (D.lv?.markets?.[k]) return part(() => ladder(k, part(() => posToday(k))));
+  return `<div class="card"><h3>${NAME[k]}</h3>${D.cftc || D.cta || D.vc ? `<h4>持倉及模型</h4>${part(() => posToday(k))}` : ''}${EMPTY}</div>`;
+}
+function renderToday() {
+  const ok = D.lv?.markets?.NQ && D.lv?.markets?.ES;
+  safe('#todayKey', () => { $('#todayKey').innerHTML = `<li>${ok ? todayMeaning() : EMPTY_TXT}</li>`; });
+  safe('#ladders', () => {
+    $('#ladders').innerHTML = !D.lv && !D.cftc && !D.cta && !D.vc ? EMPTY :
+      indexCard('NQ') + indexCard('ES') + (D.lv?.markets?.VIX ? part(vixArea) : `<div class="card"><h3>VIX</h3>${EMPTY}</div>`)
+        + (D.lv ? part(vix1dArea) : `<div class="card"><h3>VIX1D</h3>${EMPTY}</div>`);
+  });
+  safe('#flows', () => { if (D.vc && D.lv?.etf) flows(); else $('#flows').innerHTML = EMPTY; });
+  $('#sbWrap').hidden = !D.sb;
+  if (D.sb) safe('#sb', stockBond);
+}
+
+// ---------------- stock-bond correlation (build.py section 8; local board only) ----------------
+let sbRange = 'ALL';
+const SB_RANGES = [['ALL', '全部'], ['5Y', '5 年'], ['1Y', '1 年'], ['3M', '3 個月'], ['1M', '1 個月']];
+function sbPoints(B, k) {  // ALL and 5Y use month-end points; 1Y, 3M and 1M use daily points
+  if (k === 'ALL') return B.series;
+  if (k === '5Y') return B.series.slice(-60);
+  return B.daily.slice(-({ '1Y': 252, '3M': 63, '1M': 21 })[k]);
+}
+function sbChart(S, k) {  // two-year correlation (top, shaded by sign) and the 10-year yield (bottom)
+  const W = 680, H = 330, L = 48, R = 12, top = [34, 194], bot = [234, 300], n = S.length;
+  const F = 'font-size="12" fill="var(--ink-2)"';  // one text style for every label in the chart
+  const x = i => L + (W - L - R) * i / Math.max(1, n - 1);
+  const cs = S.map(p => p[1]), ys = S.map(p => p[2]);
+  const pad = (lo, hi, m) => { const d = Math.max(hi - lo, m); return [lo - d * 0.15, hi + d * 0.15]; };
+  const [c0, c1] = k === 'ALL' ? [-0.8, 0.8] : pad(Math.min(0, ...cs), Math.max(0, ...cs), 0.05);
+  const [y0, y1] = k === 'ALL' ? [0, Math.ceil(Math.max(...ys) / 4) * 4] : pad(Math.min(...ys), Math.max(...ys), 0.2);
+  const yc = v => top[0] + (top[1] - top[0]) * (c1 - v) / (c1 - c0);
+  const yy = v => bot[0] + (bot[1] - bot[0]) * (y1 - v) / (y1 - y0);
+  const ticks = (a, b, m) => Array.from({ length: m }, (_, i) => a + (b - a) * i / (m - 1));
+  const path = (f, j) => S.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${f(p[j]).toFixed(1)}`).join('');
+  const cd = (c1 - c0) < 0.4 ? 2 : 1, yd = (y1 - y0) < 2 ? 2 : (y1 - y0) < 8 ? 1 : 0;
+  const grid = ticks(c0, c1, 5).map(v => `<line x1="${L}" x2="${W - R}" y1="${yc(v)}" y2="${yc(v)}" stroke="var(--grid)"/>
+    <text x="${L - 6}" y="${yc(v) + 4}" text-anchor="end" ${F}>${sgn(v, cd)}</text>`).join('');
+  const ygrid = ticks(y0, y1, 3).map(v => `<line x1="${L}" x2="${W - R}" y1="${yy(v)}" y2="${yy(v)}" stroke="var(--grid)"/>
+    <text x="${L - 6}" y="${yy(v) + 4}" text-anchor="end" ${F}>${fmt(v, yd)}%</text>`).join('');
+  const lab = d => k === 'ALL' || k === '5Y' ? d.slice(0, 4) : k === '1Y' ? d.slice(0, 7) : d.slice(5);
+  let idx = k === 'ALL' ? S.map((p, i) => [p, i]).filter(([p]) => p[0].endsWith('-01') && +p[0].slice(0, 4) % 10 === 0).map(([, i]) => i)
+    : k === '5Y' ? S.map((p, i) => [p, i]).filter(([p]) => p[0].endsWith('-01')).map(([, i]) => i)
+      : ticks(0, n - 1, 5).map(Math.round);
+  const xt = idx.map(i => `<line x1="${x(i)}" x2="${x(i)}" y1="${top[0]}" y2="${bot[1]}" stroke="var(--grid)"/>
+    <text x="${x(i)}" y="${bot[1] + 16}" text-anchor="${i === 0 ? 'start' : i === n - 1 ? 'end' : 'middle'}" ${F}>${lab(S[i][0])}</text>`).join('');
+  const z = yc(0), last = S[n - 1];
+  const key = (yt, color, label) => `<line x1="${L}" x2="${L + 16}" y1="${yt - 4}" y2="${yt - 4}" stroke="${color}" stroke-width="3"/><text x="${L + 22}" y="${yt}" ${F}>${label}</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="兩年股債相關及 10 年期孳息，${S[0][0]} 至 ${last[0]}">
+    <rect x="${L}" y="${top[0]}" width="${W - L - R}" height="${z - top[0]}" fill="var(--s2)" opacity="0.07"/>
+    <rect x="${L}" y="${z}" width="${W - L - R}" height="${top[1] - z}" fill="var(--s1)" opacity="0.07"/>
+    ${xt}${grid}${ygrid}
+    <line x1="${L}" x2="${W - R}" y1="${z}" y2="${z}" stroke="var(--ink-3)" stroke-dasharray="4 3"/>
+    ${key(18, 'var(--s1)', '兩年股債相關')}${key(bot[0] - 12, 'var(--s4)', '10 年期美債孳息')}
+    <text x="${W - R - 6}" y="${top[0] + 14}" text-anchor="end" ${F}>零以上：股債同升同跌</text>
+    <text x="${W - R - 6}" y="${top[1] - 6}" text-anchor="end" ${F}>零以下：股票跌時債券升</text>
+    <path d="${path(yc, 1)}" fill="none" stroke="var(--s1)" stroke-width="1.8"/>
+    <path d="${path(yy, 2)}" fill="none" stroke="var(--s4)" stroke-width="1.6"/>
+    <circle cx="${x(n - 1)}" cy="${yc(last[1])}" r="4" fill="var(--s1)" stroke="var(--surface)" stroke-width="1.5"/>
+    <text x="${x(n - 1) - 8}" y="${yc(last[1]) + 18}" text-anchor="end" ${F}>現在 ${sgn(last[1], 2)}</text>
+    <circle cx="${x(n - 1)}" cy="${yy(last[2])}" r="3.5" fill="var(--s4)" stroke="var(--surface)" stroke-width="1.5"/>
+    <text x="${x(n - 1) - 8}" y="${yy(last[2]) - 8}" text-anchor="end" ${F}>${fmt(last[2], 2)}%</text>
+    <line class="sbx" x1="0" x2="0" y1="${top[0]}" y2="${bot[1]}" stroke="var(--ink-3)" visibility="hidden"/>
+    <rect class="sbhit" x="${L}" y="${top[0]}" width="${W - L - R}" height="${bot[1] - top[0]}" fill="transparent" data-l="${L}" data-w="${W - L - R}" data-vw="${W}"/>
+  </svg>`;
+}
+// hover: the date, the correlation and the yield under the pointer (user, 2026-11-27: every chart interactive)
+let SB_S = [];
+document.addEventListener('mousemove', e => {
+  const hit = e.target.closest && e.target.closest('.sbhit'), box = document.getElementById('sbChart');
+  let tip = document.getElementById('sbTip');
+  if (!hit) { if (tip) tip.hidden = true; box && box.querySelector('.sbx')?.setAttribute('visibility', 'hidden'); return; }
+  const svg = hit.ownerSVGElement, r = svg.getBoundingClientRect(), k = +hit.dataset.vw / r.width;
+  const vx = (e.clientX - r.left) * k, L = +hit.dataset.l, w = +hit.dataset.w, n = SB_S.length;
+  const i = Math.max(0, Math.min(n - 1, Math.round((vx - L) / w * (n - 1)))), p = SB_S[i];
+  const ln = svg.querySelector('.sbx'), xi = L + w * i / Math.max(1, n - 1);
+  ln.setAttribute('x1', xi); ln.setAttribute('x2', xi); ln.setAttribute('visibility', 'visible');
+  if (!tip) { tip = document.createElement('div'); tip.id = 'sbTip'; tip.className = 'sbtip'; box.style.position = 'relative'; box.appendChild(tip); }
+  tip.hidden = false; tip.innerHTML = `${p[0]}<br>兩年股債相關 ${sgn(p[1], 2)}<br>10 年期孳息 ${fmt(p[2], 2)}%`;
+  const br = box.getBoundingClientRect();
+  tip.style.left = Math.min(e.clientX - br.left + 12, br.width - 170) + 'px'; tip.style.top = (e.clientY - br.top + 12) + 'px';
+});
+function sbChartArea() {
+  const B = D.sb, S = sbPoints(B, sbRange);
+  SB_S = S;
+  const btn = SB_RANGES.map(([k, t]) => `<button type="button" data-sbr="${k}" aria-pressed="${k === sbRange}">${t}</button>`).join('');
+  const span = `${S[0][0]} 至 ${S.at(-1)[0]}，${sbRange === 'ALL' || sbRange === '5Y' ? '每月最後一個交易日一點' : '每個交易日一點'}。`;
+  const hist = sbRange === 'ALL' ? '1968 至 1998 年藍線在零以上（同期孳息多在 6% 以上）；1999 至 2022 年在零以下；2022 年 9 月升到零以上，2025 年 10 月起回到零附近。' : '';
+  return `<nav class="sbr">${btn}</nav><p class="note" style="margin:6px 0">${span}${hist}</p>${sbChart(S, sbRange)}`;
+}
+document.addEventListener('click', e => { const k = e.target.dataset?.sbr; if (k && D.sb) { sbRange = k; $('#sbChart').innerHTML = part(sbChartArea); } });
+function stockBond() {
+  const B = D.sb, V = B.vol, wk = Object.values(B.weekly).filter(v => v != null);
+  $('#sbTag').textContent = `按 ${B.date} 收市（FRED 10 年期孳息遲一個工作日公布）`;
+  const inBand = Math.abs(B.corr) < B.band;
+  const meaning = inBand
+    ? `兩年相關 ${sgn(B.corr, 2)}，在零附近的 95% 範圍（±${fmt(B.band, 2)}）之內：統計上與零沒有分別。即近兩年美債沒有穩定地抵銷股票的升跌，也沒有穩定地同升同跌。`
+    : B.corr < 0 ? `兩年相關 ${sgn(B.corr, 2)}，低於零附近的 95% 範圍（±${fmt(B.band, 2)}）：近兩年股票跌的日子，美債傾向升。`
+      : `兩年相關 ${sgn(B.corr, 2)}，高於零附近的 95% 範圍（±${fmt(B.band, 2)}）：近兩年股債傾向同升同跌。`;
+  const here = B.by_yield.find(b => { const [lo, hi] = b.range.replace('%', '').split('–').map(Number); return B.y >= lo && B.y < hi; });
+  const ctx = here ? `10 年期孳息 ${fmt(B.y, 2)}%：${B.since.slice(0, 4)} 年以來孳息在 ${here.range} 的 ${fmt(here.days)} 個交易日，兩年相關中位數 ${sgn(here.median, 2)}，${fmt(here.pos)}% 的日子為正。` : '';
+  const a1 = B.ago1y, a2 = B.ago2y;
+  const rows = [
+    ['兩年（504 個交易日，日回報）', `${sgn(B.corr, 2)}（${md(B.date)}）`, `${B.since.slice(0, 4)} 年以來第 ${fmt(B.pct)} 百分位`],
+    [`半年（${B.short_n} 個交易日）`, sgn(B.short, 2), '較短期，變動較大'],
+    ['週回報（104 週）', wk.length ? `${sgn(Math.min(...wk), 2)} 至 ${sgn(Math.max(...wk), 2)}` : '—', '按星期一至五各自結算一週，平均 ' + sgn(B.weekly_avg, 2) + '；結算日不同，數字可相差很大，所以主數用日回報'],
+    ['一年前', `${sgn(a1.corr, 2)}（${a1.date}）`, `當時孳息 ${fmt(a1.y, 2)}%`],
+    ['兩年前', `${sgn(a2.corr, 2)}（${a2.date}）`, `當時孳息 ${fmt(a2.y, 2)}%`],
+    ['歷史最低及最高', `${sgn(B.min.corr, 2)} 及 ${sgn(B.max.corr, 2)}`, `${B.min.date}；${B.max.date}`]];
+  const tbl = `<table><tr><th class="l">相關</th><th class="l">數值</th><th class="l">說明</th></tr>${rows.map(r => `<tr><td class="l nw">${r[0]}</td><td class="l nw">${r[1]}</td><td class="l">${r[2]}</td></tr>`).join('')}</table>`;
+  const mix = [['標普 500', `${fmt(V.spx, 1)}%`], ['10 年期美債', `${fmt(V.bond, 1)}%`],
+    [`股 60%、債 40%（按現時相關 ${sgn(B.corr, 2)}）`, `${fmt(V.mix_now, 1)}%`], ['同上，如相關 −0.3', `${fmt(V.mix_neg, 1)}%`], ['同上，如相關 +0.3', `${fmt(V.mix_pos, 1)}%`]];
+  const mixT = `<table><tr><th class="l">兩年實際波幅（年化）</th><th>波幅</th></tr>${mix.map(r => `<tr><td class="l">${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</table>
+    <p class="note small" style="margin-top:6px">按兩年實際波幅計，每日再平衡的簡化組合。以波幅定倉位的基金（例如風險平價），組合波幅越高，同一風險預算可持的倉位越少（推論，本板沒有這些基金的持倉數據）。</p>`;
+  const byY = `<table><tr><th class="l">10 年期孳息</th><th>交易日</th><th>兩年相關中位數</th><th>為正的日子</th><th class="l">年份</th></tr>${B.by_yield.map(b =>
+    `<tr${b === here ? ' class="now"' : ''}><td class="l">${b.range}</td><td>${fmt(b.days)}</td><td>${sgn(b.median, 2)}</td><td>${fmt(b.pos)}%</td><td class="l">${b.from}–${b.to}</td></tr>`).join('')}</table>
+    <p class="note small" style="margin-top:6px">每日的兩年相關按當日孳息分組，只作描述；相鄰日子高度重疊，交易日數不是獨立樣本。灰底是現時孳息所在的一組。</p>`;
+  $('#sb').innerHTML = `<div class="card"><h3>現在</h3><p class="note" style="margin:4px 0 8px">${meaning}${ctx ? ' ' + ctx : ''}</p>${tbl}<h4>股債組合的波幅</h4>${mixT}</div>
+    <div class="card"><h3>走勢</h3><div id="sbChart">${part(sbChartArea)}</div><h4>按孳息水平</h4>${byY}</div>`;
+}
+document.addEventListener('click', e => { const k = e.target.dataset?.all; if (k) { showAll[k] = !showAll[k]; renderToday(); markSections(); } });
+async function loadLive() {
+  clearTimeout(liveTimer);
+  if ($('#today').hidden) return;
+  const res = await fetch('api/live').then(r => r.json().then(j => ({ ok: r.ok, j }))).catch(() => null);
+  if (!res) { $('#liveMeta').textContent = '靜態版本：2026-11-27 21:36（英國時間）匯出，數據截至 2026-11-27 收市；更新按鈕、盤中報價及自動新聞擷取只在本地看板運作。以下用上一收市。'; return; }
+  if (res.ok) {
+    L = res.j;
+    computeStatus();
+    $('#liveMeta').textContent = ST.stale ? `盤中價（${L.asof} 英國時間）暫不套用：board 未包括 ${ST.want} 收市。`
+      : `盤中價更新於 ${L.asof}（英國時間），Yahoo 延遲約 10 至 15 分鐘，每 60 秒更新。`;
+    renderAll();
+  } else $('#liveMeta').textContent = res.j.error || '盤中報價暫時取不到，以下用上一收市。';
+  liveTimer = setTimeout(loadLive, 60000);
+}
+
+// ---------------- week ----------------
+function act(net, chg) {
+  if (net == null || chg == null) return '—';
+  const prev = net - chg, n = fmt(Math.abs(chg));
+  if (chg === 0) return '不變';
+  if (prev < 0 && net > 0) return `轉 long（+${n}）`;
+  if (prev > 0 && net < 0) return `轉 short（−${n}）`;
+  if (net >= 0) return chg > 0 ? `加 long ${n}` : `減 long ${n}`;
+  return chg < 0 ? `加 short ${n}` : `short 回補 ${n}`;
+}
+function state(z) {  // the net against its own 52-week mean; z is in 52-week standard deviations
+  if (z == null) return '—';
+  return `${z > 0 ? '高於' : z < 0 ? '低於' : '等於'}一年平均 <span class="muted small">z ${sgn(z, 1)}</span>`;
+}
+function marketWeek(code, name) {
+  const r = cftcRow(code), G = ['am', 'lev', 'dealer', 'other'];
+  if (!r) return `${name}期貨：未有 CFTC 數據。`;
+  const c = r.cats;
+  if (G.some(g => c[g]?.chg == null || c[g]?.net == null)) return `${name}期貨：CFTC 數據不完整。`;
+  // all five groups' nets sum to zero, so the non-reportable small accounts are the remainder
+  const who = G.map(g => ({ n: c[g].label, chg: c[g].chg, net: c[g].net }));
+  who.push({ n: '非申報小戶', chg: -who.reduce((a, x) => a + x.chg, 0), net: -who.reduce((a, x) => a + x.net, 0) });
+  const w = x => `${x.n} ${act(x.net, x.chg)}`;
+  const buy = who.filter(x => x.chg > 0).sort((a, b) => b.chg - a.chg), sell = who.filter(x => x.chg < 0).sort((a, b) => a.chg - b.chg);
+  const am = c.am.chg, lev = c.lev.chg, dir = x => x > 0 ? '買入' : x < 0 ? '賣出' : '不變';
+  let s = `${name}期貨（至 ${md(r.date)} 一週）：`;
+  s += am && lev && Math.sign(am) === Math.sign(lev) ? `資產管理和槓桿基金同是${am > 0 ? '買方' : '賣方'}` :
+       am && lev ? `資產管理${dir(am)}、槓桿基金${dir(lev)}，兩者方向相反` : `資產管理${dir(am)}、槓桿基金${dir(lev)}`;
+  s += `。買入：${buy.map(w).join('、') || '—'}；賣出（即對手方）：${sell.map(w).join('、') || '—'}。`;
+  const nd = ndRow(code);
+  if (nd?.px_chg != null && nd.date === r.date) {
+    const p = nd.px_chg;
+    s += p === 0 ? `同期${name}指數持平。` :
+      `同期（${md(nd.px_prev_date)} 至 ${md(nd.date)} 收市）${name}指數 ${sgn(p, 2)}%：買方在${p > 0 ? '上升中買入（順價格方向）' : '下跌中買入（逆價格方向）'}，賣方${p > 0 ? '逆' : '順'}價格方向。`;
+  } else s += '同期指數變化未有數據（按「更新數據」重建）。';
+  return s;
+}
+function weekMeaning() {
+  if (!D.cftc) return '<b>意思：</b>未有 CFTC 數據，未能描述持倉。按頁頂「更新數據」建置。';
+  const parts = [marketWeek('209742', '納指'), marketWeek('13874A', '標普')];
+  const M = D.lv?.markets, cf = CFTC_DS.cftc(), end = M?.ES?.date, start = M?.ES?.date_5d;
+  if (cf && end) {
+    if (cf >= end) parts.push(`CFTC 持倉日 ${cf} 已包括上面五個交易日。`);
+    else if (start && cf <= start) parts.push(`注意：CFTC 持倉截至 ${cf}（週二）收市，上面的五個交易日（${start} 至 ${end} 收市）全在其後，這段走勢中的持倉變化未知。`);
+    else parts.push(`注意：CFTC 持倉截至 ${cf}（週二）收市，之後至 ${end} 收市的走勢不在持倉之內。`);
+  }
+  return '<b>意思：</b>' + parts.join('');
+}
+const GROUPS = [
+  ['tff', 'am', '資產管理', '退休金、互惠基金、保險。較慢，多是長線配置。'],
+  ['tff', 'lev', '槓桿基金', '對沖基金及趨勢基金。較快；short 常是對沖或基差交易，不一定是看淡。'],
+  ['tff', 'dealer', '交易商', '銀行及莊家，多是別人的對手方，不應當作方向判斷。'],
+  ['tff', 'other', '其他申報', '其他大戶，如家族基金、企業財資。'],
+  ['dis', 'mm', '管理資金（商品）', '商品市場的對沖及趨勢基金，用來看原油、金屬、農產品。'],
+];
+function cftcCards() {
+  const R = D.cftc.rows, fixed = ['209742', '13874A'];
+  const line = (r, k) => { const c = r.cats[k]; return `<tr><td class="l nw">${esc(r.name)}</td><td class="l">${act(c.net, c.chg)}</td><td class="nw">${fmt(c.net)}</td><td class="l">${state(c.z)}</td></tr>`; };
+  $('#cftcCards').innerHTML = GROUPS.map(([ds, k, name, desc]) => {
+    const rows = R.filter(r => r.ds === ds && r.cats[k] && r.cats[k].chg_z != null && !fixed.includes(r.code)).sort((a, b) => b.cats[k].chg_z - a.cats[k].chg_z);
+    const top = rows.filter(r => r.cats[k].chg_z > 0).slice(0, 3), bot = rows.filter(r => r.cats[k].chg_z < 0).slice(-3).reverse();
+    return `<div class="card"><h3>${name}</h3><p class="note small">${desc}</p><table><tr><th class="l">市場</th><th class="l">本週</th><th>淨倉（張）</th><th class="l">淨倉相對一年平均</th></tr>
+      <tr class="sub"><td colspan="4">淨倉增加最多（按異常程度）</td></tr>${top.map(r => line(r, k)).join('') || '<tr><td class="l muted" colspan="4">沒有</td></tr>'}
+      <tr class="sub"><td colspan="4">淨倉減少最多（按異常程度）</td></tr>${bot.map(r => line(r, k)).join('') || '<tr><td class="l muted" colspan="4">沒有</td></tr>'}</table></div>`;
+  }).join('');
+  const dates = [...new Set(R.map(r => r.date))].sort();
+  $('#cftcNote').innerHTML = `納指、標普見上面。報告日 ${dates.at(-1)}（週二）${dates.length > 1 ? `；部分市場較舊（最早 ${dates[0]}）` : ''}，之後的走勢不在其中。數字是合約的淨倉變化，不等於真實資金流；排名按「相對該市場平常每週變動的異常程度」，因為不同市場的合約大小不能直接比較。z 是淨倉與一年平均的差，以一年內的標準差計。五類交易者的淨倉相加等於零，所以頁頂「意思」的非申報小戶是由其餘四類推算。我們的回測顯示沒有一條 CFTC 規則穩定有效，所以這裏只描述誰持甚麼倉，不用來決定買賣。`;
+}
+function ctaCards() {
+  const M = D.cta.markets.filter(m => m.sig_5d != null), fix = ['NQ', 'ES'];
+  const dist = m => m.flip_move == null ? '—' : sgn(m.flip_move, m.yield ? 0 : 1) + (m.yield ? 'bp' : '%') + (m.flat ? '（持平即翻）' : '');
+  const row = m => `<tr><td class="l nw">${esc(m.name)}</td><td class="l">${posT(m.pos)}</td><td>${sgn(m.sig)}</td><td>${sgn(m.sig_5d)}</td><td class="nw">${dist(m)}</td></tr>`;
+  const others = M.filter(m => !fix.includes(m.key)).sort((a, b) => b.sig_5d - a.sig_5d);
+  const head = '<tr><th class="l">市場</th><th class="l">倉位</th><th>信號</th><th>五日變化</th><th>距翻轉</th></tr>';
+  $('#ctaCards').innerHTML = `<div class="card"><h3>五日買入最多</h3><table>${head}${others.slice(0, 5).map(row).join('')}</table></div>
+    <div class="card"><h3>五日賣出最多</h3><table>${head}${others.slice(-5).reverse().map(row).join('')}</table></div>`;
+}
+function volWeek() {
+  const a = D.vol.vix_am, rv = D.vol.rvi, d1 = D.lv?.vix1d_rv, rows = [];
+  if (a) rows.push(['資產管理 VIX 期貨淨倉', `${fmt(a.net)} 張（${a.date}）`, `2010 年起 ${fmt(a.n)} 份週報中第 ${fmt(a.pct, 1)} 百分位。數字越低，資產管理持有的 VIX 期貨淨 short 越大。`]);
+  if (rv) {
+    rows.push(['波動率溢價', `${sgn(rv.vrp, 1)} 點（${rv.date}）`, `VIX 減標普一個月實際波動（年化）。${rv.vrp < 0 ? '負數：期權定價低於近一個月的實際波動。' : '正數：期權定價高於近一個月的實際波動。'}`]);
+  }
+  if (d1) rows.push(['近 20 日實際大過隱含的日數', `${fmt(d1.above_20)} 日（${d1.date}）`, `${d1.since.slice(0, 4)} 年 ${+d1.since.slice(5, 7)} 月起平均約 ${fmt(d1.above_20_avg, 1)} 日。即最近 20 個交易日中，有 ${fmt(d1.above_20)} 日標普的實際波幅大過前一晚 VIX1D 所定價的一日波幅。`]);
+  $('#volWeek').innerHTML = rows.length ? `<div class="card"><table><tr><th class="l">指標</th><th class="l">現在</th><th class="l">意思</th></tr>` + rows.map(r => `<tr><td class="l">${r[0]}</td><td class="l nw">${r[1]}</td><td class="l">${r[2]}</td></tr>`).join('') + '</table></div>' : EMPTY;
+}
+function weekKey() {
+  const M = D.lv?.markets, out = [];
+  if (M?.NQ && M?.ES) { const s = M.ES.date_5d, e = M.ES.date;
+    out.push(`<b>五個交易日（${s ? `${s} 至 ` : '截至 '}${e} 收市）：</b>納指 NQ ${sgn(M.NQ.chg_5d, 2)}%，標普 ES ${sgn(M.ES.chg_5d, 2)}%${M.VIX ? `，VIX ${sgn(M.VIX.chg_5d, 2)} 點` : ''}。`); }
+  else out.push('<b>五個交易日：</b>未有價格數據。');
+  return out.map(x => `<li>${x}</li>`).join('') + `<li class="meaning">${weekMeaning()}</li>`;
+}
+function renderWeek() {
+  safe('#weekKey', () => { $('#weekKey').innerHTML = D.lv || D.cftc ? weekKey() : `<li>${EMPTY_TXT}</li>`; });
+  safe('#weekIdx', () => { $('#weekIdx').innerHTML = D.cftc || D.cta || D.vc ? part(() => posWeek('NQ')) + part(() => posWeek('ES')) : EMPTY; });
+  safe('#cftcCards', () => { if (D.cftc?.rows?.length) cftcCards(); else { $('#cftcCards').innerHTML = EMPTY; $('#cftcNote').textContent = ''; } });
+  safe('#ctaCards', () => { if (D.cta?.markets?.length) ctaCards(); else $('#ctaCards').innerHTML = EMPTY; });
+  safe('#volWeek', () => { if (D.vol) volWeek(); else $('#volWeek').innerHTML = EMPTY; });
+  safe('#earn', () => {
+    const E = D.lv?.earnings;
+    $('#earn').innerHTML = !D.lv ? EMPTY : `<div class="card"><table>${E?.length ? `<tr><th class="l">公司</th><th class="l">日期</th></tr>` + E.map(x => `<tr><td class="l">${esc(x.t)}</td><td class="l">${esc(x.date)}</td></tr>`).join('') : '<tr><td class="l muted">未來三週沒有</td></tr>'}</table></div>`;
+  });
+}
+
+// ---------------- tabs and update ----------------
+$('#tabs').onclick = e => {
+  const t = e.target.dataset?.tab; if (!t) return;
+  document.querySelectorAll('#tabs button').forEach(b => b.setAttribute('aria-pressed', b.dataset.tab === t));
+  $('#today').hidden = t !== 'today'; $('#week').hidden = t !== 'week';
+  window.scrollTo(0, 0); if (t === 'today') loadLive();
+};
+let token = null, wasRunning = false;
+async function poll() {
+  const s = await fetch('api/update').then(r => r.json()).catch(() => null);
+  if (!s) { $('#upd').disabled = true; $('#updmsg').textContent = '靜態版本：2026-11-27 21:36（英國時間）匯出，數據截至 2026-11-27 收市；更新按鈕、盤中報價及自動新聞擷取只在本地看板運作。'; return; }
+  token = s.token; $('#updmsg').textContent = s.message || '';
+  $('#upd').disabled = s.state === 'running';
+  if (s.state === 'running') { wasRunning = true; setTimeout(poll, 3000); }
+  else if (s.state === 'done' && wasRunning) { wasRunning = false; load(); }
+}
+$('#upd').onclick = async () => {
+  await fetch('api/update', { method: 'POST', headers: { 'X-Refresh-Token': token || '' } }); poll();
+};
+load(); poll();
+</script>
+</body>
+</html>
